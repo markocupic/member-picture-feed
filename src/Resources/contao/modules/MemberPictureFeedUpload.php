@@ -76,7 +76,6 @@ class MemberPictureFeedUpload extends Module
         {
             return '';
         }
-        //$this->handleAjaxRequest();
 
         if (Environment::get('isAjaxRequest'))
         {
@@ -88,136 +87,13 @@ class MemberPictureFeedUpload extends Module
         return parent::generate();
     }
 
-    protected function handleAjaxRequest()
-    {
-        if (Input::post('action') === 'removeImage')
-        {
-            $blnSuccess = 'false';
-            $objFiles = FilesModel::findByPk(Input::post('fileId'));
-            if ($objFiles !== null)
-            {
-                if ($objFiles->memberPictureFeedUserId === $this->objUser->id)
-                {
-                    $oFile = new File($objFiles->path);
-                    if (is_file(TL_ROOT . '/' . $objFiles->path))
-                    {
-                        $res = $objFiles->path;
-                        $oFile->delete();
-                        Dbafs::deleteResource($res);
-                        Dbafs::updateFolderHashes(dirname($res));
-                        $blnSuccess = 'true';
-                    }
-                }
-            }
-            $arrJson = array('status' => $blnSuccess);
-            echo \GuzzleHttp\json_encode($arrJson);
-            exit();
-        }
-
-
-        if (Input::post('action') === 'getCaption' && Input::post('fileId') != '')
-        {
-
-            $objFile = FilesModel::findByPk(Input::post('fileId'));
-            if ($objFile !== null)
-            {
-                if ($objFile->memberPictureFeedUserId === $this->objUser->id)
-                {
-
-                    // get meta data
-                    global $objPage;
-                    $arrMeta = Frontend::getMetaData($objFile->meta, $objPage->language);
-                    if (empty($arrMeta) && $objPage->rootFallbackLanguage !== null)
-                    {
-                        $arrMeta = Frontend::getMetaData($objFile->meta, $objPage->rootFallbackLanguage);
-                    }
-
-                    if (!isset($arrMeta['caption']))
-                    {
-                        $caption = '';
-                    }
-                    else
-                    {
-                        $caption = $arrMeta['caption'];
-                    }
-
-                    if (!isset($arrMeta['photographer']))
-                    {
-                        $photographer = $this->objUser->firstname . ' ' . $this->objUser->lastname;
-                    }
-                    else
-                    {
-                        $photographer = $arrMeta['photographer'];
-                        if ($photographer === '')
-                        {
-                            $photographer = $this->objUser->firstname . ' ' . $this->objUser->lastname;
-                        }
-                    }
-                    $response = array(
-                        'status'       => 'success',
-                        'caption'      => html_entity_decode($caption),
-                        'photographer' => $photographer,
-                    );
-                    echo \GuzzleHttp\json_encode($response);
-                    exit();
-                }
-            }
-            echo \GuzzleHttp\json_encode(array('status' => 'error'));
-            exit();
-        }
-
-
-        if (Input::post('action') === 'setCaption' && Input::post('fileId') != '')
-        {
-            $objUser = FrontendUser::getInstance();
-            if ($objUser === null)
-            {
-                $response = new JsonResponse(array('status' => 'error'));
-                return $response->send();
-            }
-
-            $objFile = FilesModel::findByPk(Input::post('fileId'));
-            if ($objFile !== null)
-            {
-                if ($objFile->memberPictureFeedUserId === $this->objUser->id)
-                {
-                    // get meta data
-                    global $objPage;
-
-
-                    if (!isset($arrMeta[$objPage->language]))
-                    {
-                        $arrMeta[$objPage->language] = array(
-                            'title'        => '',
-                            'alt'          => '',
-                            'link'         => '',
-                            'caption'      => '',
-                            'photographer' => '',
-                        );
-                    }
-                    $arrMeta[$objPage->language]['caption'] = Input::post('caption');
-                    $arrMeta[$objPage->language]['photographer'] = Input::post('photographer') ?: $objUser->firstname . ' ' . $objUser->lastname;
-
-                    $objFile->meta = serialize($arrMeta);
-                    $objFile->save();
-                    $response = new JsonResponse(array(
-                        'status' => 'success',
-                    ));
-                    return $response->send();
-                }
-            }
-        }
-        $response = new JsonResponse(array('status' => 'error'));
-        return $response->send();
-    }
-
 
     /**
      * Generate the module
      */
     protected function compile()
     {
- 
+
         $objPicturesCount = Database::getInstance()->prepare('SELECT * FROM tl_files WHERE isMemberPictureFeed=? AND memberPictureFeedUserId=?')->execute('1', $this->objUser->id);
         if ($objPicturesCount->numRows < $this->memberPictureFeedUploadPictureLimit || $this->memberPictureFeedUploadPictureLimit < 1)
         {
@@ -266,7 +142,6 @@ class MemberPictureFeedUpload extends Module
             }
         });
     }
-
 
 
     /**
@@ -361,5 +236,124 @@ class MemberPictureFeedUpload extends Module
 
     }
 
+    /**
+     * @return $this
+     */
+    protected function handleAjaxRequest()
+    {
+        if (Input::post('action') === 'removeImage')
+        {
+            $blnSuccess = 'false';
+            $objFiles = FilesModel::findByPk(Input::post('fileId'));
+            if ($objFiles !== null)
+            {
+                if ($objFiles->memberPictureFeedUserId === $this->objUser->id)
+                {
+                    $oFile = new File($objFiles->path);
+                    if (is_file(TL_ROOT . '/' . $objFiles->path))
+                    {
+                        $res = $objFiles->path;
+                        $oFile->delete();
+                        Dbafs::deleteResource($res);
+                        Dbafs::updateFolderHashes(dirname($res));
+                        $blnSuccess = 'true';
+                    }
+                }
+            }
+            $arrJson = array('status' => $blnSuccess);
+            echo \GuzzleHttp\json_encode($arrJson);
+            exit();
+        }
 
+
+        if (Input::post('action') === 'getCaption' && Input::post('fileId') != '')
+        {
+
+            $objFile = FilesModel::findByPk(Input::post('fileId'));
+            if ($objFile !== null)
+            {
+                if ($objFile->memberPictureFeedUserId === $this->objUser->id)
+                {
+
+                    // get meta data
+                    global $objPage;
+                    $arrMeta = Frontend::getMetaData($objFile->meta, $objPage->language);
+                    if (empty($arrMeta) && $objPage->rootFallbackLanguage !== null)
+                    {
+                        $arrMeta = Frontend::getMetaData($objFile->meta, $objPage->rootFallbackLanguage);
+                    }
+
+                    if (!isset($arrMeta['caption']))
+                    {
+                        $caption = '';
+                    }
+                    else
+                    {
+                        $caption = $arrMeta['caption'];
+                    }
+
+                    if (!isset($arrMeta['photographer']))
+                    {
+                        $photographer = $this->objUser->firstname . ' ' . $this->objUser->lastname;
+                    }
+                    else
+                    {
+                        $photographer = $arrMeta['photographer'];
+                        if ($photographer === '')
+                        {
+                            $photographer = $this->objUser->firstname . ' ' . $this->objUser->lastname;
+                        }
+                    }
+                    $response = array(
+                        'status'       => 'success',
+                        'caption'      => html_entity_decode($caption),
+                        'photographer' => $photographer,
+                    );
+                    echo \GuzzleHttp\json_encode($response);
+                    exit();
+                }
+            }
+            echo \GuzzleHttp\json_encode(array('status' => 'error'));
+            exit();
+        }
+
+
+        if (Input::post('action') === 'setCaption' && Input::post('fileId') != '')
+        {
+            $objUser = FrontendUser::getInstance();
+            if ($objUser === null)
+            {
+                echo \GuzzleHttp\json_encode(array('status' => 'error'));
+                exit;
+            }
+
+            $objFile = FilesModel::findByPk(Input::post('fileId'));
+            if ($objFile !== null)
+            {
+                if ($objFile->memberPictureFeedUserId === $this->objUser->id)
+                {
+                    // get meta data
+                    global $objPage;
+                    if (!isset($arrMeta[$objPage->language]))
+                    {
+                        $arrMeta[$objPage->language] = array(
+                            'title'        => '',
+                            'alt'          => '',
+                            'link'         => '',
+                            'caption'      => '',
+                            'photographer' => '',
+                        );
+                    }
+                    $arrMeta[$objPage->language]['caption'] = Input::post('caption');
+                    $arrMeta[$objPage->language]['photographer'] = Input::post('photographer') ?: $objUser->firstname . ' ' . $objUser->lastname;
+
+                    $objFile->meta = serialize($arrMeta);
+                    $objFile->save();
+                    echo \GuzzleHttp\json_encode(array('status' => 'success'));
+                    exit;
+                }
+            }
+        }
+        echo \GuzzleHttp\json_encode(array('status' => 'error'));
+    }
 }
