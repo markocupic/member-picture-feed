@@ -1,0 +1,44 @@
+{
+    "name": "markocupic/member-picture-feed",
+    "description": "Contao module, add a member picture feed module to a contao installation.",
+    "keywords": [
+        "contao",
+        "member-picture-feed",
+        "picture",
+        "feed"
+    ],
+    "type": "contao-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Marko Cupic",
+            "email": "m.cupic@gmx.ch",
+            "homepage": "http://4ae-racing-team.ch",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/markocupic/member-picture-feed/issues",
+        "source": "https://github.com/markocupic/member-picture-feed"
+    },
+    "require": {
+        "contao/core-bundle": ">=4.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Markocupic\\MemberPictureFeedBundle\\": "src/"
+        },
+        "classmap": [
+            "src/Resources/contao"
+        ],
+        "exclude-from-classmap": [
+            "src/Resources/contao/assets",
+            "src/Resources/contao/config",
+            "src/Resources/contao/dca",
+            "src/Resources/contao/languages"
+        ]
+    },
+    "extra": {
+        "contao-manager-plugin": "Markocupic\\MemberPictureFeedBundle\\ContaoManager\\Plugin"
+    }
+}
