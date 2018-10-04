@@ -6,4 +6,8 @@
  * Time: 10:56
  */
 
-$GLOBALS['TL_HOOKS']['parseTemplate'][] =  array('Markocupic\NavPageContainer\Contao\Classes\ParseTemplate', 'parseTemplateHook');
+// Frontend Modules
+$GLOBALS['FE_MOD']['member_picture_feed'] = array(
+    'memberPictureFeedUpload' => 'Markocupic\MemberPictureFeedBundle\Contao\Modules\MemberPictureFeedUpload',
+);
+

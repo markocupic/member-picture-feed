@@ -1,6 +1,6 @@
 <?php
 // Palette
-$GLOBALS['TL_DCA']['tl_module']['palettes']['memberPictureFeed'] = '{title_legend},name,headline,type;{upload_folder_settings},memberPictureFeedUploadFolder;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['memberPictureFeedUpload'] = '{title_legend},name,headline,type;{upload_folder_settings},memberPictureFeedUploadFolder;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
 
 
 // Fields
