@@ -8,6 +8,11 @@
 
 namespace Markocupic\MemberPictureFeedBundle\Contao\Modules;
 
+use Contao\Module;
+use Contao\BackendTemplate;
+use Contao\FrontendUser;
+use Patchwork\Utf8;
+
 
 class MemberPictureFeedUpload extends Module
 {
