@@ -1,0 +1,63 @@
+
+<!-- indexer::stop -->
+<div class="<?= $this->class ?> block"<?= $this->cssID ?><?php if ($this->style): ?> style="<?= $this->style ?>"<?php endif; ?>>
+
+  <?php if ($this->headline): ?>
+    <<?= $this->hl ?>><?= $this->headline ?></<?= $this->hl ?>>
+  <?php endif; ?>
+
+  <?php if ($this->message): ?>
+    <p class="tl_confirm"><?= $this->message ?></p>
+  <?php endif; ?>
+  <?php if($this->objUploadForm): ?>
+    <?= $this->objUploadForm ?>
+  <?php endif; ?>
+
+  <?php if($this->hasPictures): ?>
+  <ul class="row">
+    <?php while($this->pictures->next()): ?>
+    <li class="position-relative col-2 col-md-3" data-file-id="<?=$this->pictures->id ?>">
+      {{image::<?= $this->pictures->id ?>?width=400&height=400&mode=crop&rel=lightboxlb<?= $this->id ?>}}
+      <div class="member-picture-feed-thumb-buttons-container position-absolute d-flex">
+        <button class="btn btn-danger remove-image mr-1" title="Bild löschen"><i class="fal fa-trash"></i></button>
+        <button class="btn btn-danger add-caption" title="Bildunterschrift hinzufügen"><i class="fal fa-pencil"></i></button>
+      </div>
+    </li>
+      <?php endwhile; ?>
+  </li>
+  <?php endif; ?>
+
+</ul>
+<script>
+    (function ($) {
+        $(document).ready(function () {
+            "use strict";
+            $('.remove-image').on('click touchmove', function (e) {
+                e.preventDefault();
+                var elImage = $(this).closest('[data-file-id]');
+                if (elImage.length) {
+                    var fileId = $(elImage).data('file-id');
+                    if (fileId !== undefined) {
+                        var jqxhr = $.post(window.location.href, {
+                            'REQUEST_TOKEN': '{{request_token}}',
+                            'xhr': 'true',
+                            'action': 'removeImage',
+                            'fileId': fileId
+                        }).done(function (json) {
+                            if (json.status != 'success') {
+                                console.log(json);
+                            }
+                            elImage.fadeOut(400, function () {
+                                $(this).remove();
+                                location.reload();
+                            });
+                        });
+                    }
+                }
+            });
+
+
+    })(jQuery);
+
+</script>
+<!-- indexer::continue -->
