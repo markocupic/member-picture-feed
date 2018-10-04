@@ -7,7 +7,7 @@
     "picture",
     "feed"
   ],
-  "type": "contao-module",
+  "type": "contao-bundle",
   "license": "MIT",
   "authors": [
     {
@@ -36,7 +36,8 @@
       "src/Resources/contao/assets",
       "src/Resources/contao/config",
       "src/Resources/contao/dca",
-      "src/Resources/contao/languages"
+      "src/Resources/contao/languages",
+      "src/Resources/contao/templates"
     ]
   },
   "extra": {
