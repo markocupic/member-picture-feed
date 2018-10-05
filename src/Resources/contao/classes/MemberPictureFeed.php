@@ -10,6 +10,7 @@
 namespace Markocupic\MemberPictureFeedBundle\Contao\Classes;
 
 use Contao\Database;
+use Contao\Dbafs;
 use Contao\DC_Table;
 use Contao\File;
 use Contao\MemberModel;
@@ -60,12 +61,19 @@ class MemberPictureFeed
         $objPictures = Database::getInstance()->prepare('SELECT * FROM tl_files WHERE isMemberPictureFeed=? AND memberPictureFeedUserId=?')->execute('1', $objMember->id);
         while ($objPictures->next())
         {
+            $res = '';
             $objFile = new File($objPictures->path);
             if ($objFile !== null)
             {
+                $res = $objFile->path;
                 $objFile->delete();
             }
             Database::getInstance()->prepare('DELETE FROM tl_files WHERE id=?')->execute($objPictures->id);
+
+            if ($res !== '')
+            {
+                Dbafs::updateFolderHashes(dirname($res));
+            }
         }
     }
 }
