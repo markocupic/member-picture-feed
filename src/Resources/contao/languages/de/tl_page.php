@@ -1,9 +1,10 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: Marko
- * Date: 22.09.2018
- * Time: 14:01
+ * Contao module: Member Picture Feed Bundle
+ * Copyright (c) 2008-2018 Marko Cupic
+ * @package member-picture-feed-bundle
+ * @author Marko Cupic m.cupic@gmx.ch, 2018
+ * @link https://github.com/markocupic/member-picture-feed
  */
 
 // Fields

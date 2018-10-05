@@ -1,14 +1,16 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: Lenovo
- * Date: 04.10.2018
- * Time: 11:56
+ * Contao module: Member Picture Feed Bundle
+ * Copyright (c) 2008-2018 Marko Cupic
+ * @package member-picture-feed-bundle
+ * @author Marko Cupic m.cupic@gmx.ch, 2018
+ * @link https://github.com/markocupic/member-picture-feed
  */
 
 namespace Markocupic\MemberPictureFeedBundle\Contao\Modules;
 
 use Contao\Controller;
+use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\Database;
 use Contao\Dbafs;
 use Contao\FilesModel;
@@ -24,9 +26,15 @@ use Patchwork\Utf8;
 use Haste\Form\Form;
 use Contao\Input;
 use Contao\Environment;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Contao\System;
+use Contao\Config;
+use Psr\Log\LogLevel;
 
 
+/**
+ * Class MemberPictureFeedUpload
+ * @package Markocupic\MemberPictureFeedBundle\Contao\Modules
+ */
 class MemberPictureFeedUpload extends Module
 {
 
@@ -45,6 +53,11 @@ class MemberPictureFeedUpload extends Module
      * @var
      */
     protected $objUploadForm;
+
+    /**
+     * @var
+     */
+    protected $hasResized;
 
 
     /**
@@ -77,12 +90,12 @@ class MemberPictureFeedUpload extends Module
             return '';
         }
 
+        // Handle ajax requests
         if (Environment::get('isAjaxRequest'))
         {
             $this->handleAjaxRequest();
-            return '';
+            exit();
         }
-
 
         return parent::generate();
     }
@@ -94,6 +107,16 @@ class MemberPictureFeedUpload extends Module
     protected function compile()
     {
 
+        $session = System::getContainer()->get('session');
+        $flashBag = $session->getFlashBag();
+        $arrMessages = array();
+
+        // Get flash bag messages
+        if ($session->isStarted() && $flashBag->has('mod_member_picture_feed_upload'))
+        {
+            $arrMessages = array_merge($arrMessages, $flashBag->get('mod_member_picture_feed_upload'));
+        }
+
         $objPicturesCount = Database::getInstance()->prepare('SELECT * FROM tl_files WHERE isMemberPictureFeed=? AND memberPictureFeedUserId=?')->execute('1', $this->objUser->id);
         if ($objPicturesCount->numRows < $this->memberPictureFeedUploadPictureLimit || $this->memberPictureFeedUploadPictureLimit < 1)
         {
@@ -101,10 +124,10 @@ class MemberPictureFeedUpload extends Module
         }
         else
         {
-            $this->Template->message = $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'];
+            $arrMessages[] = $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'];
         }
 
-        $objPictures = Database::getInstance()->prepare('SELECT * FROM tl_files WHERE isMemberPictureFeed=? AND memberPictureFeedUserId=?')->execute('1', $this->objUser->id);
+        $objPictures = Database::getInstance()->prepare('SELECT * FROM tl_files WHERE isMemberPictureFeed=? AND memberPictureFeedUserId=? ORDER BY name')->execute('1', $this->objUser->id);
         if ($objPictures->numRows > 0)
         {
             $this->Template->hasPictures = true;
@@ -141,6 +164,12 @@ class MemberPictureFeedUpload extends Module
                 return Controller::replaceInsertTags($strTag);
             }
         });
+
+        if (!empty($arrMessages))
+        {
+            $this->Template->hasMessages = true;
+            $this->Template->arrMessages = $arrMessages;
+        }
     }
 
 
@@ -170,46 +199,44 @@ class MemberPictureFeedUpload extends Module
         $objForm = new Form('form-member-picture-feed-upload', 'POST', function ($objHaste) {
             return Input::post('FORM_SUBMIT') === $objHaste->getFormId();
         });
-        $url = Environment::get('uri');
 
+        $url = Environment::get('uri');
         $objForm->setFormActionFromUri($url);
 
-
+        // Add some fields
         $objForm->addFormField('fileupload', array(
-            'label'     => $GLOBALS['TL_LANG']['MSC']['activateMemberAccount_sacMemberId'],
+            'label'     => $GLOBALS['TL_LANG']['MSC']['membePictureFeedFileuploadLabel'],
             'inputType' => 'upload',
             'eval'      => array('extensions' => 'jpg,jpeg', 'uploadFolder' => $objUploadFolder->uuid, 'mandatory' => true),
         ));
 
         // Let's add  a submit button
         $objForm->addFormField('submit', array(
-            'label'     => $GLOBALS['TL_LANG']['MSC']['activateMemberAccount_startActivationProcess'],
+            'label'     => $GLOBALS['TL_LANG']['MSC']['membePictureFeedUploadBtnlLabel'],
             'inputType' => 'submit',
         ));
 
-        // Automatically add the FORM_SUBMIT and REQUEST_TOKEN hidden fields.
-        // DO NOT use this method with generate() as the "form" template provides those fields by default.
-        $objForm->addContaoHiddenFields();
 
-
+        // Add attributes
         $objWidget = $objForm->getWidget('fileupload');
         $objWidget->addAttribute('accept', '.jpg, .jpeg');
-        //die(print_r($objWidget,true));
+
+        // Set the upload folder from the module settings
         $objWidget->uploadFolder = $this->memberPictureFeedUploadFolder;
         $objWidget->storeFile = true;
 
+        // Rename files & standardize filename
         if (!empty($_FILES['fileupload']))
         {
             $objFile = new File($_FILES['fileupload']['name']);
             $_FILES['fileupload']['name'] = sprintf('%s-%s.%s', $this->objUser->id, time(), $objFile->extension);
-
         }
 
 
         // validate() also checks whether the form has been submitted
         if ($objForm->validate())
         {
-            if (!empty($_SESSION['FILES']['fileupload']) && is_array($_SESSION['FILES']['fileupload']))
+            if (is_array($_SESSION['FILES']['fileupload']) && !empty($_SESSION['FILES']['fileupload']))
             {
                 $uuid = $_SESSION['FILES']['fileupload']['uuid'];
                 if (Validator::isStringUuid($uuid))
@@ -223,17 +250,21 @@ class MemberPictureFeedUpload extends Module
                         $objModel->isMemberPictureFeed = true;
                         $objModel->memberPictureFeedUserId = $this->objUser->id;
                         $objModel->save();
+                        $this->resizeUploadedImage($objModel->path);
+
+                        // Log
+                        $strText = sprintf('User with username %s has uploadad a new picture ("%s") for the member-picture-feed.', $this->objUser->username, $objModel->path);
+                        $logger = System::getContainer()->get('monolog.logger.contao');
+                        $logger->log(LogLevel::INFO, $strText, array('contao' => new ContaoContext(__METHOD__, 'MEMBER PICTURE FEED')));
+
+                        // Reload page
                         $this->reload();
                     }
                 }
             }
-
-
         }
 
         $this->Template->objUploadForm = $objForm->generate();
-
-
     }
 
     /**
@@ -241,18 +272,19 @@ class MemberPictureFeedUpload extends Module
      */
     protected function handleAjaxRequest()
     {
-        if (Input::post('action') === 'removeImage')
+        // Ajax request: action=removeImage
+        if (Input::post('action') === 'removeImage' && Input::post('fileId') != '')
         {
             $blnSuccess = 'false';
-            $objFiles = FilesModel::findByPk(Input::post('fileId'));
-            if ($objFiles !== null)
+            $objFile = FilesModel::findByPk(Input::post('fileId'));
+            if ($objFile !== null)
             {
-                if ($objFiles->memberPictureFeedUserId === $this->objUser->id)
+                if ($objFile->memberPictureFeedUserId === $this->objUser->id)
                 {
-                    $oFile = new File($objFiles->path);
-                    if (is_file(TL_ROOT . '/' . $objFiles->path))
+                    $oFile = new File($objFile->path);
+                    if (is_file(TL_ROOT . '/' . $objFile->path))
                     {
-                        $res = $objFiles->path;
+                        $res = $objFile->path;
                         $oFile->delete();
                         Dbafs::deleteResource($res);
                         Dbafs::updateFolderHashes(dirname($res));
@@ -265,7 +297,7 @@ class MemberPictureFeedUpload extends Module
             exit();
         }
 
-
+        // Ajax request: action=getCaption
         if (Input::post('action') === 'getCaption' && Input::post('fileId') != '')
         {
 
@@ -317,7 +349,7 @@ class MemberPictureFeedUpload extends Module
             exit();
         }
 
-
+        // Ajax request: action=setCaption
         if (Input::post('action') === 'setCaption' && Input::post('fileId') != '')
         {
             $objUser = FrontendUser::getInstance();
@@ -355,5 +387,83 @@ class MemberPictureFeedUpload extends Module
             }
         }
         echo \GuzzleHttp\json_encode(array('status' => 'error'));
+    }
+
+    /**
+     * Resize an uploaded image if necessary
+     *
+     * @param string $strImage
+     *
+     * @return boolean
+     */
+    public function resizeUploadedImage($strImage)
+    {
+        // The feature is disabled
+        if (Config::get('maxImageWidth') < 1)
+        {
+            return false;
+        }
+
+        $objFile = new File($strImage);
+
+        // Not an image
+        if (!$objFile->isSvgImage && !$objFile->isGdImage)
+        {
+            return false;
+        }
+        $arrImageSize = $objFile->imageSize;
+
+        // The image is too big to be handled by the GD library
+        if ($objFile->isGdImage && ($arrImageSize[0] > Config::get('gdMaxImgWidth') || $arrImageSize[1] > Config::get('gdMaxImgHeight')))
+        {
+            // Log
+            $strText = 'File "' . $strImage . '" is too big to be resized automatically';
+            $logger = System::getContainer()->get('monolog.logger.contao');
+            $logger->log(LogLevel::INFO, $strText, array('contao' => new ContaoContext(__METHOD__, TL_FILES)));
+
+            // Set flash bag message
+            $session = System::getContainer()->get('session');
+            $flashBag = $session->getFlashBag();
+            $flashBag->set('mod_member_picture_feed_upload', sprintf($GLOBALS['TL_LANG']['MSC']['fileExceeds'], $objFile->basename));
+            return false;
+        }
+
+        $blnResize = false;
+
+        // The image exceeds the maximum image width
+        if ($arrImageSize[0] > Config::get('maxImageWidth'))
+        {
+            $blnResize = true;
+            $intWidth = Config::get('maxImageWidth');
+            $intHeight = round(Config::get('maxImageWidth') * $arrImageSize[1] / $arrImageSize[0]);
+            $arrImageSize = array($intWidth, $intHeight);
+        }
+
+        // The image exceeds the maximum image height
+        if ($arrImageSize[1] > Config::get('maxImageWidth'))
+        {
+            $blnResize = true;
+            $intWidth = round(Config::get('maxImageWidth') * $arrImageSize[0] / $arrImageSize[1]);
+            $intHeight = Config::get('maxImageWidth');
+            $arrImageSize = array($intWidth, $intHeight);
+        }
+
+        // Resized successfully
+        if ($blnResize)
+        {
+            System::getContainer()
+                ->get('contao.image.image_factory')
+                ->create(TL_ROOT . '/' . $strImage, array($arrImageSize[0], $arrImageSize[1]), TL_ROOT . '/' . $strImage);
+
+            $this->blnHasResized = true;
+
+            // Set flash bag message
+            $session = System::getContainer()->get('session');
+            $flashBag = $session->getFlashBag();
+            $flashBag->set('mod_member_picture_feed_upload', sprintf($GLOBALS['TL_LANG']['MSC']['fileResized'], $objFile->basename));
+            return true;
+        }
+
+        return false;
     }
 }

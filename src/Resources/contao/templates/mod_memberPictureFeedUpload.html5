@@ -5,8 +5,10 @@
 <<?= $this->hl ?>><?= $this->headline ?></<?= $this->hl ?>>
 <?php endif; ?>
 
-<?php if ($this->message): ?>
-<p class="tl_confirm"><?= $this->message ?></p>
+<?php if ($this->hasMessages): ?>
+<?php foreach($this->arrMessages as $message): ?>
+<p class="tl_confirm"><?= $message ?></p>
+<?php endforeach; ?>
 <?php endif; ?>
 
 <?php if($this->objUploadForm): ?>

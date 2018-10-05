@@ -1,4 +1,12 @@
 <?php
+/**
+ * Contao module: Member Picture Feed Bundle
+ * Copyright (c) 2008-2018 Marko Cupic
+ * @package member-picture-feed-bundle
+ * @author Marko Cupic m.cupic@gmx.ch, 2018
+ * @link https://github.com/markocupic/member-picture-feed
+ */
+
 // Palette
 $GLOBALS['TL_DCA']['tl_module']['palettes']['memberPictureFeedUpload'] = '{title_legend},name,headline,type;{upload_folder_settings},memberPictureFeedUploadFolder,imgSize,memberPictureFeedUploadPictureLimit;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
 
