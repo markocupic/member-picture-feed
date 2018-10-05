@@ -1,2 +1,3 @@
 # Member Picture Feed
-Benutzer können in einem FE Modul ihre Lieblingsbilder hochladen. Die Bilder können dass in einem Frontend Modul angezeigt werden.
+Benutzer können über ein Frontend-Modul ihre Lieblingsbilder hochladen. 
+Die Bilder können dann über ein weiteres Frontend-Modul angezeigt werden.
