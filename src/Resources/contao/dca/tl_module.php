@@ -28,4 +28,4 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['memberPictureFeedUploadPictureLimit']
     'eval'      => array('mandatory' => false, 'rgxp' => 'natural', 'tl_class' => 'w50'),
     'sql'       => "smallint(5) unsigned NOT NULL default '0'"
 );
- 
+

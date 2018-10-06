@@ -7,7 +7,7 @@
  * @link https://github.com/markocupic/member-picture-feed
  */
 
-$GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'] = "Du hast bereits das Upload Maximum erreicht. Um weitere Bilder hochzuladen, musst du zuerst mind. ein Bild löschen.";
+$GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'] = "Du hast bereits das Upload Maximum erreicht. Um weitere Bilder hochzuladen, musst du zuerst mindestens ein Bild löschen.";
 $GLOBALS['TL_LANG']['MSC']['membePictureFeedUploadBtnlLabel'] = "Upload starten";
 $GLOBALS['TL_LANG']['MSC']['membePictureFeedFileuploadLabel'] = "Bilddatei auswählen";
 
