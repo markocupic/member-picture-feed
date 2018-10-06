@@ -249,6 +249,7 @@ class MemberPictureFeedUpload extends Module
                     {
                         $objModel->isMemberPictureFeed = true;
                         $objModel->memberPictureFeedUserId = $this->objUser->id;
+                        $objModel->tstamp = time();
                         $objModel->save();
                         $this->resizeUploadedImage($objModel->path);
 
@@ -275,7 +276,7 @@ class MemberPictureFeedUpload extends Module
         // Ajax request: action=removeImage
         if (Input::post('action') === 'removeImage' && Input::post('fileId') != '')
         {
-            $blnSuccess = 'false';
+            $blnSuccess = 'error';
             $objFile = FilesModel::findByPk(Input::post('fileId'));
             if ($objFile !== null)
             {
@@ -288,7 +289,7 @@ class MemberPictureFeedUpload extends Module
                         $oFile->delete();
                         Dbafs::deleteResource($res);
                         Dbafs::updateFolderHashes(dirname($res));
-                        $blnSuccess = 'true';
+                        $blnSuccess = 'success';
                     }
                 }
             }
@@ -296,6 +297,25 @@ class MemberPictureFeedUpload extends Module
             echo \GuzzleHttp\json_encode($arrJson);
             exit();
         }
+
+        // Ajax request: action=rotateImage
+        if (Input::post('action') === 'rotateImage' && Input::post('fileId') != '')
+        {
+            $blnSuccess = 'error';
+            $objFile = FilesModel::findByPk(Input::post('fileId'));
+            if ($objFile !== null)
+            {
+                if ($objFile->memberPictureFeedUserId === $this->objUser->id)
+                {
+                    $this->rotateImage($objFile->id);
+                    $blnSuccess = 'success';
+                }
+            }
+            $arrJson = array('status' => $blnSuccess);
+            echo \GuzzleHttp\json_encode($arrJson);
+            exit();
+        }
+
 
         // Ajax request: action=getCaption
         if (Input::post('action') === 'getCaption' && Input::post('fileId') != '')
@@ -466,4 +486,56 @@ class MemberPictureFeedUpload extends Module
 
         return false;
     }
+
+    /**
+     * Rotate an image clockwise by 90°
+     * @param $id
+     * @return bool
+     * @throws \Exception
+     */
+    protected function rotateImage($id)
+    {
+        $angle = 90;
+
+        $objFiles = FilesModel::findById($id);
+        if ($objFiles === null)
+        {
+            return false;
+        }
+
+        $src = $objFiles->path;
+
+        $rootDir = System::getContainer()->getParameter('kernel.project_dir');
+
+        if (!file_exists($rootDir . '/' . $src))
+        {
+            Message::addError(sprintf('File "%s" not found.', $src));
+            return false;
+        }
+
+        $objFile = new File($src);
+        if (!$objFile->isGdImage)
+        {
+            Message::addError(sprintf('File "%s" could not be rotated because it is not an image.', $src));
+            return false;
+        }
+
+        if (!function_exists('imagerotate'))
+        {
+            Message::addError(sprintf('PHP function "%s" is not installed.', 'imagerotate'));
+            return false;
+        }
+
+        $source = imagecreatefromjpeg($rootDir . '/' . $src);
+
+        //rotate
+        $imgTmp = imagerotate($source, $angle, 0);
+
+        // Output
+        imagejpeg($imgTmp, $rootDir . '/' . $src);
+
+        imagedestroy($source);
+        return true;
+    }
+
 }

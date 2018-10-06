@@ -1,159 +1,184 @@
 <!-- indexer::stop -->
 <div class="<?= $this->class ?> block"<?= $this->cssID ?><?php if ($this->style): ?> style="<?= $this->style ?>"<?php endif; ?>>
 
-<?php if ($this->headline): ?>
-<<?= $this->hl ?>><?= $this->headline ?></<?= $this->hl ?>>
-<?php endif; ?>
+    <?php if ($this->headline): ?>
+    <<?= $this->hl ?>><?= $this->headline ?></<?= $this->hl ?>>
+    <?php endif; ?>
 
-<?php if ($this->hasMessages): ?>
-<?php foreach($this->arrMessages as $message): ?>
-<p class="tl_confirm alert alert-info"><?= $message ?></p>
-<?php endforeach; ?>
-<?php endif; ?>
+    <?php if ($this->hasMessages): ?>
+    <?php foreach($this->arrMessages as $message): ?>
+    <p class="tl_confirm alert alert-info"><?= $message ?></p>
+    <?php endforeach; ?>
+    <?php endif; ?>
 
-<?php if($this->objUploadForm): ?>
-<?= $this->objUploadForm ?>
-<?php endif; ?>
+    <?php if($this->objUploadForm): ?>
+    <?= $this->objUploadForm ?>
+    <?php endif; ?>
 
-<?php if($this->hasPictures): ?>
-{{br}}
-<hr>
-{{br}}
-<ul class="row">
-    <?php while($this->pictures->next()): ?>
-    <li class="member-picture-feed-thumb col-2 col-md-3" data-file-id="<?=$this->pictures->id ?>" data-src="<?=$this->pictures->path ?>">
-        <?= $this->getImageHtml($this->pictures->id) ?>
-        <div class="member-picture-feed-thumb-buttons-container d-flex">
-            <button class="btn btn-danger remove-image" title="Bild löschen"><i class="fal fa-trash"></i></button>
-            <button class="btn btn-danger add-caption" title="Bildunterschrift hinzufügen"><i class="fal fa-pencil"></i></button>
-        </div>
-    </li>
-    <?php endwhile; ?>
-</ul>
-<!--modal box -->
-<div class="modal fade member-picture-feed-caption-modal" tabindex="-1" role="dialog" aria-labelledby="ModalImageCaption" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="ModalImageCaption">Bildeschreibung</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <i aria-hidden="true" class="fal fa-times"></i>
-                </button>
+    <?php if($this->hasPictures): ?>
+    {{br}}
+    <hr>
+    {{br}}
+    <ul class="row">
+        <?php while($this->pictures->next()): ?>
+        <li class="member-picture-feed-thumb col-2 col-md-3" data-file-id="<?=$this->pictures->id ?>" data-src="<?=$this->pictures->path ?>">
+            <?= $this->getImageHtml($this->pictures->id) ?>
+            <div class="member-picture-feed-thumb-buttons-container d-flex">
+                <button class="btn btn-danger remove-image" title="Bild löschen"><i class="fal fa-trash"></i></button>
+                <button class="btn btn-danger add-caption" title="Bildunterschrift hinzufügen"><i class="fal fa-pencil"></i></button>
+                <button class="btn btn-danger rotate-image" title="Bild 90° im GUZG drehen"><i class="fal fa-history"></i></button>
             </div>
-            <div class="modal-body">
-                <figure>
-                    <img class="image-full-res" src=""/>
-                </figure>
-                {{br}}
-                <div class="form-group">
-                    <label for="imageCaptionInput">Bildbeschreibung</label>
-                    <input class="form-control" id="imageCaptionInput" name="image-caption" type="text" placeholder="">
+        </li>
+        <?php endwhile; ?>
+    </ul>
+    <!--modal box -->
+    <div class="modal fade member-picture-feed-caption-modal" tabindex="-1" role="dialog" aria-labelledby="ModalImageCaption" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ModalImageCaption">Bildeschreibung</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <i aria-hidden="true" class="fal fa-times"></i>
+                    </button>
                 </div>
-                {{br}}
-                <div class="form-group">
-                    <label for="imagePhotographerInput">Photograph/Bildeigent&uuml;mer</label>
-                    <input class="form-control" id="imagePhotographerInput" name="image-photographer" type="text" placeholder="">
+                <div class="modal-body">
+                    <figure>
+                        <img class="image-full-res" src=""/>
+                    </figure>
+                    {{br}}
+                    <div class="form-group">
+                        <label for="imageCaptionInput">Bildbeschreibung</label>
+                        <input class="form-control" id="imageCaptionInput" name="image-caption" type="text" maxlength="40" placeholder="">
+                    </div>
+                    {{br}}
+                    <div class="form-group">
+                        <label for="imagePhotographerInput">Photograph/Bildeigent&uuml;mer</label>
+                        <input class="form-control" id="imagePhotographerInput" name="image-photographer" type="text" placeholder="">
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" id="saveCaptionButton" class="btn btn-primary">Speichern</button>
+                <div class="modal-footer">
+                    <button type="button" id="saveCaptionButton" class="btn btn-primary">Speichern</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<?php endif; ?>
-</ul>
 
 
-<script>
-    (function ($) {
-        $(document).ready(function () {
-            "use strict";
-            $('.remove-image').on('click touchmove', function (e) {
-                e.preventDefault();
-                var elImage = $(this).closest('[data-file-id]');
-                if (elImage.length) {
-                    var fileId = $(elImage).data('file-id');
-                    if (fileId !== undefined) {
-                        var jqxhr = $.post(window.location.href, {
-                            'REQUEST_TOKEN': '{{request_token}}',
-                            'xhr': 'true',
-                            'action': 'removeImage',
-                            'fileId': fileId
-                        }).done(function (json) {
-                            json = $.parseJSON(json);
-                            if (json.status != 'success') {
-                                console.log(json);
-                            }
-                            elImage.fadeOut(400, function () {
-                                $(this).remove();
-                                location.reload();
+
+
+    <script>
+        (function ($) {
+            $(document).ready(function () {
+                "use strict";
+                $('.remove-image').on('click touchmove', function (e) {
+                    e.preventDefault();
+                    var elImage = $(this).closest('[data-file-id]');
+                    if (elImage.length) {
+                        var fileId = $(elImage).data('file-id');
+                        if (fileId !== undefined) {
+                            var jqxhr = $.post(window.location.href, {
+                                'REQUEST_TOKEN': '{{request_token}}',
+                                'xhr': 'true',
+                                'action': 'removeImage',
+                                'fileId': fileId
+                            }).done(function (json) {
+                                json = $.parseJSON(json);
+                                if (json.status != 'success') {
+                                    console.log(json);
+                                }
+                                elImage.fadeOut(400, function () {
+                                    $(this).remove();
+                                    location.reload();
+                                });
                             });
-                        });
+                        }
                     }
-                }
-            });
+                });
 
-            // Open modal for caption edit
-            $('button.add-caption').click(function (e) {
-                e.preventDefault();
-                var elImage = $(this).closest('[data-file-id]');
-                if (elImage.length) {
-                    var fileId = $(elImage).data('file-id');
-                    var filePath = $(elImage).data('src');
-                    if (fileId !== undefined) {
-                        var modal = $('.modal.member-picture-feed-caption-modal').first();
-                        $(modal).data('fileId', fileId);
-                        $(modal).find('.image-full-res').attr('src', filePath);
-                        //$(modal).attr('data-item', item);
-
-                        var jqxhr = $.post(window.location.href, {
-                            'REQUEST_TOKEN': '{{request_token}}',
-                            'action': 'getCaption',
-                            'fileId': fileId
-                        }).done(function (json) {
-                            json = $.parseJSON(json);
-                            if (json['status'] != 'success') {
-                                console.log(json['status']);
-                            } else {
-                                $(modal).modal('toggle');
-                                $(modal).find('#imageCaptionInput').val(json.caption);
-                                $(modal).find('#imagePhotographerInput').val(json.photographer);
-                            }
-                        }).always(function () {
-                            //
-                        });
+                $('.rotate-image').on('click touchmove', function (e) {
+                    e.preventDefault();
+                    var elImage = $(this).closest('[data-file-id]');
+                    if (elImage.length) {
+                        var fileId = $(elImage).data('file-id');
+                        if (fileId !== undefined) {
+                            var jqxhr = $.post(window.location.href, {
+                                'REQUEST_TOKEN': '{{request_token}}',
+                                'xhr': 'true',
+                                'action': 'rotateImage',
+                                'fileId': fileId
+                            }).done(function (json) {
+                                json = $.parseJSON(json);
+                                console.log(json.status);
+                                if (json.status === 'success') {
+                                    window.location.reload();
+                                }
+                            });
+                        }
                     }
-                }
-            });
+                });
 
-            // Save caption to the server
-            $('#saveCaptionButton').click(function () {
-                var modal = $(this).closest('.modal');
-                var fileId = $(modal).data('fileId');
-                var imageLink = $('[data-file-id="' + fileId + '"').find('a');
-                $(modal).modal('hide');
-                var caption = $(modal).find('#imageCaptionInput').val();
-                var photographer = $(modal).find('#imagePhotographerInput').val();
-                $(modal).modal('hide');
+                // Open modal for caption edit
+                $('button.add-caption').click(function (e) {
+                    e.preventDefault();
+                    var elImage = $(this).closest('[data-file-id]');
+                    if (elImage.length) {
+                        var fileId = $(elImage).data('file-id');
+                        var filePath = $(elImage).data('src');
+                        if (fileId !== undefined) {
+                            var modal = $('.modal.member-picture-feed-caption-modal').first();
+                            $(modal).data('fileId', fileId);
+                            $(modal).find('.image-full-res').attr('src', filePath);
+                            //$(modal).attr('data-item', item);
 
-                var jqxhr = $.post(window.location.href, {
-                    'REQUEST_TOKEN': '{{request_token}}',
-                    'action': 'setCaption',
-                    'fileId': fileId,
-                    'caption': caption,
-                    'photographer': photographer
-                }).done(function (json) {
-                    if (json.status != 'success') {
-                        //console.log(json);
+                            var jqxhr = $.post(window.location.href, {
+                                'REQUEST_TOKEN': '{{request_token}}',
+                                'action': 'getCaption',
+                                'fileId': fileId
+                            }).done(function (json) {
+                                json = $.parseJSON(json);
+                                if (json['status'] != 'success') {
+                                    //console.log(json['status']);
+                                } else {
+                                    $(modal).modal('toggle');
+                                    $(modal).find('#imageCaptionInput').val(json.caption);
+                                    $(modal).find('#imagePhotographerInput').val(json.photographer);
+                                }
+                            }).always(function () {
+                                //
+                            });
+                        }
                     }
-                }).always(function () {
-                    window.location.reload();
+                });
+
+                // Save caption to the server
+                $('#saveCaptionButton').click(function () {
+                    var modal = $(this).closest('.modal');
+                    var fileId = $(modal).data('fileId');
+                    var imageLink = $('[data-file-id="' + fileId + '"').find('a');
+                    $(modal).modal('hide');
+                    var caption = $(modal).find('#imageCaptionInput').val();
+                    var photographer = $(modal).find('#imagePhotographerInput').val();
+                    $(modal).modal('hide');
+
+                    var jqxhr = $.post(window.location.href, {
+                        'REQUEST_TOKEN': '{{request_token}}',
+                        'action': 'setCaption',
+                        'fileId': fileId,
+                        'caption': caption,
+                        'photographer': photographer
+                    }).done(function (json) {
+                        if (json.status != 'success') {
+                            //console.log(json);
+                        }
+                    }).always(function () {
+                        window.location.reload();
+                    });
                 });
             });
-        });
 
-    })(jQuery);
+        })(jQuery);
 
-</script>
-<!-- indexer::continue -->
+    </script>
+    <?php endif; ?>
+    <!-- indexer::continue -->
+</div>
