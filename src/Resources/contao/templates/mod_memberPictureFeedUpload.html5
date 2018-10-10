@@ -48,7 +48,7 @@
                     {{br}}
                     <div class="form-group">
                         <label for="imageCaptionInput">Bildbeschreibung</label>
-                        <input class="form-control" id="imageCaptionInput" name="image-caption" type="text" maxlength="40" placeholder="">
+                        <input class="form-control" id="imageCaptionInput" name="image-caption" type="text" maxlength="60" placeholder="">
                     </div>
                     {{br}}
                     <div class="form-group">
