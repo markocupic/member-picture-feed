@@ -7,7 +7,7 @@ $strAccepted = implode(',', array_map(function ($a) { return '.' . $a; }, \Strin
 
 // Add the scripts
 $GLOBALS['TL_CSS'][] = 'assets/dropzone/css/dropzone.min.css';
-$GLOBALS['TL_CSS'][] = 'assets/dropzone/css/dropzone.min.css';
+$GLOBALS['TL_JAVASCRIPT'][] = 'assets/dropzone/js/dropzone.min.js';
 $GLOBALS['TL_CSS'][] = 'bundles/markocupicmemberpicturefeed/css/dropzone.css';
 ?>
 
@@ -22,8 +22,7 @@ $GLOBALS['TL_CSS'][] = 'bundles/markocupicmemberpicturefeed/css/dropzone.css';
   </div>
   <span class="dropzone-previews"></span>
 </div>
-<br>
-<div class="dz-error alert alert-danger"><p></p></div>
+
 <script>
     Dropzone.autoDiscover = false;
     $( document ).ready(function() {
@@ -66,3 +65,6 @@ $GLOBALS['TL_CSS'][] = 'bundles/markocupicmemberpicturefeed/css/dropzone.css';
 <?php $help = sprintf($GLOBALS['TL_LANG']['tl_files']['fileupload'][1], \System::getReadableSize($this->getMaximumUploadSize()), \Config::get('gdMaxImgWidth') . "x" . \Config::get('gdMaxImgHeight')); ?>
 <p class="tl_help tl_tip"><?= $help ?></p>
 <?php endif; ?>
+
+<br>
+<div class="dz-error alert alert-danger"><p></p></div>
