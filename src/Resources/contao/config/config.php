@@ -9,8 +9,13 @@
 
 // Frontend Modules
 $GLOBALS['FE_MOD']['member_picture_feed'] = array(
-    'memberPictureFeedUpload'  => 'Markocupic\MemberPictureFeedBundle\Contao\Modules\MemberPictureFeedUpload',
+    'memberPictureFeedUpload' => 'Markocupic\MemberPictureFeedBundle\Contao\Modules\MemberPictureFeedUpload',
 );
 
 // Hooks
 $GLOBALS['TL_HOOKS']['closeAccount'][] = array('Markocupic\MemberPictureFeedBundle\Contao\Classes\MemberPictureFeed', 'closeAccountHook');
+
+
+// Front end form fields
+$GLOBALS['TL_FFL']['uploadDropzone'] = 'FormFileUploadDropzone';
+

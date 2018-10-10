@@ -91,7 +91,7 @@ class MemberPictureFeedUpload extends Module
         }
 
         // Handle ajax requests
-        if (Environment::get('isAjaxRequest'))
+        if ((!is_array($_FILES) || empty($_FILES)) && Environment::get('isAjaxRequest'))
         {
             $this->handleAjaxRequest();
             exit();
@@ -125,6 +125,17 @@ class MemberPictureFeedUpload extends Module
         else
         {
             $arrMessages[] = $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'];
+
+            // Send response for Dropzone
+            if (Environment::get('isAjaxRequest') && (is_array($_FILES) && !empty($_FILES)))
+            {
+                $json = array(
+                    'status'   => 'error',
+                    'errorMsg' => $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached']
+                );
+                echo \GuzzleHttp\json_encode($json);
+                exit;
+            }
         }
 
         $objPictures = Database::getInstance()->prepare('SELECT * FROM tl_files WHERE isMemberPictureFeed=? AND memberPictureFeedUserId=? ORDER BY name')->execute('1', $this->objUser->id);
@@ -205,14 +216,14 @@ class MemberPictureFeedUpload extends Module
 
         // Add some fields
         $objForm->addFormField('fileupload', array(
-            'label'     => $GLOBALS['TL_LANG']['MSC']['membePictureFeedFileuploadLabel'],
-            'inputType' => 'upload',
+            'label'     => $GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadLabel'],
+            'inputType' => 'uploadDropzone',
             'eval'      => array('extensions' => 'jpg,jpeg', 'uploadFolder' => $objUploadFolder->uuid, 'mandatory' => true),
         ));
 
         // Let's add  a submit button
         $objForm->addFormField('submit', array(
-            'label'     => $GLOBALS['TL_LANG']['MSC']['membePictureFeedUploadBtnlLabel'],
+            'label'     => $GLOBALS['TL_LANG']['MSC']['memberPictureFeedUploadBtnlLabel'],
             'inputType' => 'submit',
         ));
 
@@ -236,6 +247,7 @@ class MemberPictureFeedUpload extends Module
         // validate() also checks whether the form has been submitted
         if ($objForm->validate())
         {
+
             if (is_array($_SESSION['FILES']['fileupload']) && !empty($_SESSION['FILES']['fileupload']))
             {
                 $uuid = $_SESSION['FILES']['fileupload']['uuid'];
@@ -257,6 +269,21 @@ class MemberPictureFeedUpload extends Module
                         $strText = sprintf('User with username %s has uploadad a new picture ("%s") for the member-picture-feed.', $this->objUser->username, $objModel->path);
                         $logger = System::getContainer()->get('monolog.logger.contao');
                         $logger->log(LogLevel::INFO, $strText, array('contao' => new ContaoContext(__METHOD__, 'MEMBER PICTURE FEED')));
+
+                        // Send response for Dropzone
+                        if (Environment::get('isAjaxRequest'))
+                        {
+                            $json = array(
+                                'status'   => 'success',
+                                'errorMsg' => '',
+                                'name'     => $objModel->name,
+                                'path'     => $objModel->path,
+                                'id'       => $objModel->id,
+                                'uuid'     => StringUtil::binToUuid($objModel->uuid)
+                            );
+                            echo \GuzzleHttp\json_encode($json);
+                            exit;
+                        }
 
                         // Reload page
                         $this->reload();

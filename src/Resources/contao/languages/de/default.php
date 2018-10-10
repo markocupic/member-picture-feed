@@ -8,6 +8,6 @@
  */
 
 $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'] = "Du hast bereits das Upload Maximum erreicht. Um weitere Bilder hochzuladen, musst du zuerst mindestens ein Bild löschen.";
-$GLOBALS['TL_LANG']['MSC']['membePictureFeedUploadBtnlLabel'] = "Upload starten";
-$GLOBALS['TL_LANG']['MSC']['membePictureFeedFileuploadLabel'] = "Bilddatei auswählen";
+$GLOBALS['TL_LANG']['MSC']['memberPictureFeedUploadBtnlLabel'] = "Upload starten";
+$GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadLabel'] = "Bilddatei auswählen";
 

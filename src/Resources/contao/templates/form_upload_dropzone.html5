@@ -1,0 +1,68 @@
+<?php
+// Maximum file size in MB
+$intMaxSize = round($this->getMaximumUploadSize() / 1024 / 1024);
+
+// String of accepted file extensions
+$strAccepted = implode(',', array_map(function ($a) { return '.' . $a; }, \StringUtil::trimsplit(',', strtolower(\Config::get('uploadTypes')))));
+
+// Add the scripts
+$GLOBALS['TL_CSS'][] = 'assets/dropzone/css/dropzone.min.css';
+$GLOBALS['TL_CSS'][] = 'assets/dropzone/css/dropzone.min.css';
+$GLOBALS['TL_CSS'][] = 'bundles/markocupicmemberpicturefeed/css/dropzone.css';
+?>
+
+<input type="hidden" name="action" value="fileupload">
+<div class="fallback">
+  <input type="file" name="<?= $this->name ?>[]" class="tl_upload_field" onfocus="Backend.getScrollOffset()" multiple>
+</div>
+<div class="dropzone <?= $this->strPrefix ?>">
+  <div class="dz-default dz-message">
+    <?php \Controller::loadLanguageFile('tl_files'); ?>
+    <span><?= $GLOBALS['TL_LANG']['tl_files']['dropzone'] ?> </span>
+  </div>
+  <span class="dropzone-previews"></span>
+</div>
+<br>
+<div class="dz-error alert alert-danger"><p></p></div>
+<script>
+    Dropzone.autoDiscover = false;
+    $( document ).ready(function() {
+        var form = jQuery(".dropzone").closest('form');
+        jQuery(form).prop('id', 'formDropzoneUpload<?= $this->id ?>');
+        var dz  = new Dropzone("#" + jQuery(form).prop('id'), {
+            paramName: "<?= $this->name ?>",
+            parallelUploads: 1,
+            maxFilesize: "<?= $intMaxSize ?>",
+            acceptedFiles: "<?= $strAccepted ?>",
+            timeout: 0,
+            previewsContainer: ".dropzone-previews",
+            clickable: ".dropzone"
+        }).on("addedfile", function() {
+            jQuery(".dz-message").css("display", "none");
+        }).on("complete", function(file){
+            var response = jQuery.parseJSON(file.xhr.response);
+            if(response.status === 'error')
+            {
+                jQuery(form).find('.dz-error').show().find('p').text(response.errorMsg);
+                Dropzone.confirm(
+                    response.errorMsg,
+                    function(){},
+                    function(){
+                        dz.removeAllFiles();
+                        window.setTimeout(window.location.reload(), 2000);
+                    }
+                );
+                jQuery(file.previewElement).find('.dz-error-message').text('Error!').show().css('opacity', 1);
+            }
+        }).on("queuecomplete", function(){
+           window.setTimeout(window.location.reload(), 2000);
+        });
+        jQuery("form .submit").css("display", "none");
+        jQuery("form .dz-error").css("display", "none");
+    });
+</script>
+
+<?php if (isset($GLOBALS['TL_LANG']['tl_files']['fileupload'][1])): ?>
+<?php $help = sprintf($GLOBALS['TL_LANG']['tl_files']['fileupload'][1], \System::getReadableSize($this->getMaximumUploadSize()), \Config::get('gdMaxImgWidth') . "x" . \Config::get('gdMaxImgHeight')); ?>
+<p class="tl_help tl_tip"><?= $help ?></p>
+<?php endif; ?>
