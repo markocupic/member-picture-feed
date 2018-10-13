@@ -216,7 +216,7 @@ class MemberPictureFeedUpload extends Module
         $objForm->addFormField('fileupload', array(
             'label'     => $GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadLabel'],
             'inputType' => 'fineUploaderMemberPictureFeed',
-            'eval'      => array('extensions' => 'jpg,jpeg', 'storeFile' => true, 'addToDbafs' => true, 'isGallery' => false, 'directUpload' => false, 'multiple' => true, 'useHomeDir' => false, 'uploadFolder' => $objUploadFolder->path, 'mandatory' => false),
+            'eval'      => array('extensions' => 'jpg,jpeg', 'storeFile' => true, 'addToDbafs' => true, 'isGallery' => false, 'directUpload' => false, 'multiple' => true, 'useHomeDir' => false, 'uploadFolder' => $objUploadFolder->path, 'mandatory' => true),
         ));
 
 
@@ -282,11 +282,14 @@ class MemberPictureFeedUpload extends Module
 
             if (!$objWidgetFileupload->hasErrors())
             {
+                unset($_SESSION['FILES']);
                 // Reload page
                 $this->reload();
             }
 
         }
+
+        unset($_SESSION['FILES']);
 
         $this->Template->objUploadForm = $objForm->generate();
     }
