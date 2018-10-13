@@ -13,6 +13,7 @@ use Contao\Controller;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\Database;
 use Contao\Dbafs;
+use Contao\Files;
 use Contao\FilesModel;
 use Contao\Folder;
 use Contao\File;
@@ -59,6 +60,11 @@ class MemberPictureFeedUpload extends Module
      */
     protected $hasResized;
 
+    /**
+     * @var array
+     */
+    protected $arrMessages = array();
+
 
     /**
      * Display a wildcard in the back end
@@ -67,6 +73,8 @@ class MemberPictureFeedUpload extends Module
      */
     public function generate()
     {
+
+
         if (TL_MODE == 'BE')
         {
             /** @var BackendTemplate|object $objTemplate */
@@ -109,33 +117,20 @@ class MemberPictureFeedUpload extends Module
 
         $session = System::getContainer()->get('session');
         $flashBag = $session->getFlashBag();
-        $arrMessages = array();
 
         // Get flash bag messages
         if ($session->isStarted() && $flashBag->has('mod_member_picture_feed_upload'))
         {
-            $arrMessages = array_merge($arrMessages, $flashBag->get('mod_member_picture_feed_upload'));
+            $this->arrMessages = array_merge($this->arrMessages, $flashBag->get('mod_member_picture_feed_upload'));
         }
 
-        $objPicturesCount = Database::getInstance()->prepare('SELECT * FROM tl_files WHERE isMemberPictureFeed=? AND memberPictureFeedUserId=?')->execute('1', $this->objUser->id);
-        if ($objPicturesCount->numRows < $this->memberPictureFeedUploadPictureLimit || $this->memberPictureFeedUploadPictureLimit < 1)
+        if ($this->countUserImages() < $this->memberPictureFeedUploadPictureLimit || $this->memberPictureFeedUploadPictureLimit < 1)
         {
             $this->generateUploadForm();
         }
         else
         {
-            $arrMessages[] = $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'];
-
-            // Send response for Dropzone
-            if (Environment::get('isAjaxRequest') && (is_array($_FILES) && !empty($_FILES)))
-            {
-                $json = array(
-                    'status'   => 'error',
-                    'errorMsg' => $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached']
-                );
-                echo \GuzzleHttp\json_encode($json);
-                exit;
-            }
+            $this->arrMessages[] = $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'];
         }
 
         $objPictures = Database::getInstance()->prepare('SELECT * FROM tl_files WHERE isMemberPictureFeed=? AND memberPictureFeedUserId=? ORDER BY name')->execute('1', $this->objUser->id);
@@ -176,10 +171,10 @@ class MemberPictureFeedUpload extends Module
             }
         });
 
-        if (!empty($arrMessages))
+        if (!empty($this->arrMessages))
         {
             $this->Template->hasMessages = true;
-            $this->Template->arrMessages = $arrMessages;
+            $this->Template->arrMessages = $this->arrMessages;
         }
     }
 
@@ -201,6 +196,7 @@ class MemberPictureFeedUpload extends Module
                 }
             }
         }
+
         if ($objUploadFolder === null)
         {
             return;
@@ -211,15 +207,18 @@ class MemberPictureFeedUpload extends Module
             return Input::post('FORM_SUBMIT') === $objHaste->getFormId();
         });
 
+
         $url = Environment::get('uri');
         $objForm->setFormActionFromUri($url);
 
         // Add some fields
+
         $objForm->addFormField('fileupload', array(
             'label'     => $GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadLabel'],
-            'inputType' => 'uploadDropzone',
-            'eval'      => array('extensions' => 'jpg,jpeg', 'uploadFolder' => $objUploadFolder->uuid, 'mandatory' => true),
+            'inputType' => 'fineUploaderMemberPictureFeed',
+            'eval'      => array('extensions' => 'jpg,jpeg', 'storeFile' => true, 'addToDbafs' => true, 'isGallery' => false, 'directUpload' => false, 'multiple' => true, 'useHomeDir' => false, 'uploadFolder' => $objUploadFolder->path, 'mandatory' => false),
         ));
+
 
         // Let's add  a submit button
         $objForm->addFormField('submit', array(
@@ -229,70 +228,76 @@ class MemberPictureFeedUpload extends Module
 
 
         // Add attributes
-        $objWidget = $objForm->getWidget('fileupload');
-        $objWidget->addAttribute('accept', '.jpg, .jpeg');
-
-        // Set the upload folder from the module settings
-        $objWidget->uploadFolder = $this->memberPictureFeedUploadFolder;
-        $objWidget->storeFile = true;
-
-        // Rename files & standardize filename
-        if (!empty($_FILES['fileupload']))
-        {
-            $objFile = new File($_FILES['fileupload']['name']);
-            $_FILES['fileupload']['name'] = sprintf('%s-%s.%s', $this->objUser->id, time(), $objFile->extension);
-        }
-
+        $objWidgetFileupload = $objForm->getWidget('fileupload');
+        $objWidgetFileupload->addAttribute('accept', '.jpg, .jpeg');
+        $objWidgetFileupload->storeFile = true;
 
         // validate() also checks whether the form has been submitted
-        if ($objForm->validate())
+        if ($objForm->validate() && Input::post('FORM_SUBMIT') === $objForm->getFormId())
         {
-
-            if (is_array($_SESSION['FILES']['fileupload']) && !empty($_SESSION['FILES']['fileupload']))
+            if (is_array($_SESSION['FILES']) && !empty($_SESSION['FILES']))
             {
-                $uuid = $_SESSION['FILES']['fileupload']['uuid'];
-                if (Validator::isStringUuid($uuid))
+                foreach ($_SESSION['FILES'] as $k => $file)
                 {
-                    $binUuid = StringUtil::uuidToBin($uuid);
-                    $objModel = FilesModel::findByUuid($binUuid);
-
-                    // Save to tl_files
-                    if ($objModel !== null)
+                    $uuid = $file['uuid'];
+                    if (Validator::isStringUuid($uuid))
                     {
-                        $objModel->isMemberPictureFeed = true;
-                        $objModel->memberPictureFeedUserId = $this->objUser->id;
-                        $objModel->tstamp = time();
-                        $objModel->save();
-                        $this->resizeUploadedImage($objModel->path);
+                        $binUuid = StringUtil::uuidToBin($uuid);
+                        $objModel = FilesModel::findByUuid($binUuid);
 
-                        // Log
-                        $strText = sprintf('User with username %s has uploadad a new picture ("%s") for the member-picture-feed.', $this->objUser->username, $objModel->path);
-                        $logger = System::getContainer()->get('monolog.logger.contao');
-                        $logger->log(LogLevel::INFO, $strText, array('contao' => new ContaoContext(__METHOD__, 'MEMBER PICTURE FEED')));
-
-                        // Send response for Dropzone
-                        if (Environment::get('isAjaxRequest'))
+                        if ($objModel !== null)
                         {
-                            $json = array(
-                                'status'   => 'success',
-                                'errorMsg' => '',
-                                'name'     => $objModel->name,
-                                'path'     => $objModel->path,
-                                'id'       => $objModel->id,
-                                'uuid'     => StringUtil::binToUuid($objModel->uuid)
-                            );
-                            echo \GuzzleHttp\json_encode($json);
-                            exit;
-                        }
+                            $objFile = new File($objModel->path);
 
-                        // Reload page
-                        $this->reload();
+                            //Check if upload limit is reached
+                            if ($this->countUserImages() >= $this->memberPictureFeedUploadPictureLimit && $this->memberPictureFeedUploadPictureLimit > 0)
+                            {
+                                $objFile->delete();
+                                $objWidgetFileupload->addError($GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReachedDuringUploadProcess']);
+                            }
+                            else
+                            {
+                                // Rename file
+                                $newFilename = sprintf('%s-%s.%s', $this->objUser->id, time(), $objFile->extension);
+                                $newPath = dirname($objModel->path) . '/' . $newFilename;
+                                Files::getInstance()->rename($objFile->path, $newPath);
+                                Dbafs::addResource($newPath);
+
+                                $objModel = FilesModel::findByPath($newPath);
+                                $objModel->isMemberPictureFeed = true;
+                                $objModel->memberPictureFeedUserId = $this->objUser->id;
+                                $objModel->tstamp = time();
+                                $objModel->save();
+                                $this->resizeUploadedImage($objModel->path);
+
+                                // Log
+                                $strText = sprintf('User with username %s has uploadad a new picture ("%s") for the member-picture-feed.', $this->objUser->username, $objModel->path);
+                                $logger = System::getContainer()->get('monolog.logger.contao');
+                                $logger->log(LogLevel::INFO, $strText, array('contao' => new ContaoContext(__METHOD__, 'MEMBER PICTURE FEED')));
+                            }
+                        }
                     }
                 }
             }
+
+            if (!$objWidgetFileupload->hasErrors())
+            {
+                // Reload page
+                $this->reload();
+            }
+
         }
 
         $this->Template->objUploadForm = $objForm->generate();
+    }
+
+    /**
+     * @return int
+     */
+    protected function countUserImages()
+    {
+        $objPicturesCount = Database::getInstance()->prepare('SELECT * FROM tl_files WHERE isMemberPictureFeed=? AND memberPictureFeedUserId=?')->execute('1', $this->objUser->id);
+        return $objPicturesCount->numRows;
     }
 
     /**

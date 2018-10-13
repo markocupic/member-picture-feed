@@ -23,7 +23,8 @@
   },
   "require": {
     "contao/core-bundle": ">=4.4",
-    "codefog/contao-haste": "^4"
+    "codefog/contao-haste": "^4",
+    "terminal42/contao-fineuploader": "^2.1"
   },
   "autoload": {
     "psr-4": {

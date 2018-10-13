@@ -15,7 +15,10 @@ $GLOBALS['FE_MOD']['member_picture_feed'] = array(
 // Hooks
 $GLOBALS['TL_HOOKS']['closeAccount'][] = array('Markocupic\MemberPictureFeedBundle\Contao\Classes\MemberPictureFeed', 'closeAccountHook');
 
+// Form fields
+$GLOBALS['TL_FFL']['fineUploaderMemberPictureFeed'] = 'FormFineUploaderMemberPictureFeed';
 
-// Front end form fields
-$GLOBALS['TL_FFL']['uploadDropzone'] = 'FormFileUploadDropzone';
+
+// CSS
+$GLOBALS['TL_CSS'][] = 'bundles/markocupicmemberpicturefeed/css/fineuploader.css';
 

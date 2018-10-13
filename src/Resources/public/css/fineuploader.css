@@ -1,0 +1,23 @@
+.fineuploader-container {
+    border: 2px dashed #ccc !important;
+    padding: 2rem;
+}
+
+.qq-upload-button-selector.qq-upload-button {
+    background-color: #0082c7 !important;
+    color: #fff !important;
+
+}
+
+.qq-upload-button-selector.qq-upload-button:hover {
+    background-color: red !important;
+    color: #fff !important;
+}
+
+.qq-progress-bar{
+    background: #0082c7 !important;
+    border-radius: 2px !important;
+}
+
+
+
