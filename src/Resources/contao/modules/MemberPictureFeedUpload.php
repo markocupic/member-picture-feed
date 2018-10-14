@@ -133,7 +133,7 @@ class MemberPictureFeedUpload extends Module
             $this->arrMessages[] = $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'];
         }
 
-        $objPictures = Database::getInstance()->prepare('SELECT * FROM tl_files WHERE isMemberPictureFeed=? AND memberPictureFeedUserId=? ORDER BY name')->execute('1', $this->objUser->id);
+        $objPictures = Database::getInstance()->prepare('SELECT * FROM tl_files WHERE isMemberPictureFeed=? AND memberPictureFeedUserId=? ORDER BY memberPictureFeedUploadTime DESC')->execute('1', $this->objUser->id);
         if ($objPictures->numRows > 0)
         {
             $this->Template->hasPictures = true;
@@ -276,6 +276,7 @@ class MemberPictureFeedUpload extends Module
                                 $objModel->isMemberPictureFeed = true;
                                 $objModel->memberPictureFeedUserId = $this->objUser->id;
                                 $objModel->tstamp = time();
+                                $objModel->memberPictureFeedUploadTime = time();
                                 $objModel->save();
                                 $this->resizeUploadedImage($objModel->path);
 

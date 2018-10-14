@@ -15,4 +15,8 @@ $GLOBALS['TL_DCA']['tl_files']['fields']['isMemberPictureFeed'] = array(
 $GLOBALS['TL_DCA']['tl_files']['fields']['memberPictureFeedUserId'] = array(
     'sql' => "int(10) unsigned NOT NULL default '0'"
 );
+
+$GLOBALS['TL_DCA']['tl_files']['fields']['memberPictureFeedUploadTime'] = array(
+    'sql' => "int(10) unsigned NOT NULL default '0'"
+);
  

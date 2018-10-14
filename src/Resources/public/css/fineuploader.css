@@ -1,6 +1,7 @@
 .fineuploader-container {
     border: 2px dashed #ccc !important;
     padding: 2rem;
+    padding-top: 1rem;
 }
 
 .qq-upload-button-selector.qq-upload-button {
@@ -14,9 +15,25 @@
     color: #fff !important;
 }
 
-.qq-progress-bar{
+.qq-progress-bar {
     background: #0082c7 !important;
     border-radius: 2px !important;
+}
+
+.qq-upload-button-selector.qq-upload-button {
+    width: 200px !important;
+}
+
+.qq-upload-list-selector.qq-upload-list {
+    margin-top: 10px !important;
+}
+
+.qq-upload-list-selector.qq-upload-list li {
+    margin-top: 5px !important;
+}
+
+.qq-total-progress-bar-container-selector.qq-total-progress-bar-container {
+    margin-left: 0 !important;
 }
 
 

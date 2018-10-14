@@ -21,8 +21,11 @@
     {{br}}
     <ul class="row">
         <?php while($this->pictures->next()): ?>
-        <li class="member-picture-feed-thumb col-2 col-md-3" data-file-id="<?=$this->pictures->id ?>" data-src="<?=$this->pictures->path ?>">
+        <li class="member-picture-feed-thumb col-6 col-lg-3" data-file-id="<?=$this->pictures->id ?>" data-src="<?=$this->pictures->path ?>">
             <?= $this->getImageHtml($this->pictures->id) ?>
+            <div class="member-picture-feed-upload-time-overlay">
+                <?= \Date::parse('d.m.Y', $this->pictures->memberPictureFeedUploadTime) ?>
+            </div>
             <div class="member-picture-feed-thumb-buttons-container d-flex">
                 <button class="btn btn-danger remove-image" title="Bild löschen"><i class="fal fa-trash"></i></button>
                 <button class="btn btn-danger add-caption" title="Bildunterschrift hinzufügen"><i class="fal fa-pencil"></i></button>

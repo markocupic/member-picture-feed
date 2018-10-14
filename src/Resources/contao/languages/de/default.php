@@ -14,5 +14,5 @@ $GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadLabel'] = "Bilddatei ausw
 
 
 // Fineuploader
-$GLOBALS['TL_LANG']['MSC']['memberPictureFeed_fineuploader_upload'] = 'Dateien für Upload auswählen';
+$GLOBALS['TL_LANG']['MSC']['memberPictureFeed_fineuploader_upload'] = "Hier klicken oder Dateien ablegen";
 
