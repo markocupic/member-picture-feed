@@ -1,13 +1,13 @@
 .fineuploader-container {
     border: 2px dashed #ccc !important;
-    padding: 2rem;
-    padding-top: 1rem;
+    padding: 1rem 2rem;
 }
 
 .qq-upload-button-selector.qq-upload-button {
     background-color: #0082c7 !important;
     color: #fff !important;
-
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .qq-upload-button-selector.qq-upload-button:hover {
@@ -21,7 +21,7 @@
 }
 
 .qq-upload-button-selector.qq-upload-button {
-    width: 200px !important;
+    width: 250px !important;
 }
 
 .qq-upload-list-selector.qq-upload-list {

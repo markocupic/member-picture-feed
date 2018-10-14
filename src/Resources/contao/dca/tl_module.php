@@ -8,7 +8,7 @@
  */
 
 // Palette
-$GLOBALS['TL_DCA']['tl_module']['palettes']['memberPictureFeedUpload'] = '{title_legend},name,headline,type;{member_picture_feed_settings},memberPictureFeedUploadFolder,imgSize,memberPictureFeedUploadPictureLimit;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['memberPictureFeedUpload'] = '{title_legend},name,headline,type;{member_picture_feed_settings},memberPictureFeedUploadFolder,imgSize,memberPictureFeedUploadPictureLimit;{template_legend:hide},customTpl,memberPictureFeedUploadCustomUploaderTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
 
 
 // Fields
@@ -28,4 +28,32 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['memberPictureFeedUploadPictureLimit']
     'eval'      => array('mandatory' => false, 'rgxp' => 'natural', 'tl_class' => 'w50'),
     'sql'       => "smallint(5) unsigned NOT NULL default '0'"
 );
+
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['memberPictureFeedUploadCustomUploaderTpl'] = array(
+    'label'                   => &$GLOBALS['TL_LANG']['tl_module']['memberPictureFeedUploadCustomUploaderTpl'],
+    'exclude'                 => true,
+    'inputType'               => 'select',
+    'options_callback'        => array('tl_module_member_picture_feed_uploader', 'getUploaderTemplates'),
+    'eval'                    => array('includeBlankOption'=>true, 'chosen'=>true, 'tl_class'=>'w50'),
+    'sql'                     => "varchar(64) NOT NULL default ''"
+);
+
+/**
+ * Class tl_module_member_picture_feed_uploader
+ */
+class tl_module_member_picture_feed_uploader extends Backend
+{
+
+    /**
+     * Return all event templates as array
+     *
+     * @return array
+     */
+    public function getUploaderTemplates()
+    {
+        return $this->getTemplateGroup('fineuploader_frontend_');
+    }
+
+}
 

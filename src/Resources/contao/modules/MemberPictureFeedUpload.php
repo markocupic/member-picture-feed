@@ -53,11 +53,6 @@ class MemberPictureFeedUpload extends Module
     /**
      * @var
      */
-    protected $objUploadForm;
-
-    /**
-     * @var
-     */
     protected $hasResized;
 
     /**
@@ -65,6 +60,10 @@ class MemberPictureFeedUpload extends Module
      */
     protected $arrMessages = array();
 
+    /**
+     * @var string
+     */
+    protected $flashMessageKey = 'mod_member_picture_feed_upload';
 
     /**
      * Display a wildcard in the back end
@@ -115,13 +114,14 @@ class MemberPictureFeedUpload extends Module
     protected function compile()
     {
 
+
         $session = System::getContainer()->get('session');
-        $flashBag = $session->getFlashBag();
 
         // Get flash bag messages
-        if ($session->isStarted() && $flashBag->has('mod_member_picture_feed_upload'))
+        if ($session->isStarted() && $this->hasFlashMessage($this->flashMessageKey))
         {
-            $this->arrMessages = array_merge($this->arrMessages, $flashBag->get('mod_member_picture_feed_upload'));
+            $this->arrMessages = array_merge($this->arrMessages, $this->getFlashMessage($this->flashMessageKey));
+            $this->unsetFlashMessage($this->flashMessageKey);
         }
 
         if ($this->countUserImages() < $this->memberPictureFeedUploadPictureLimit || $this->memberPictureFeedUploadPictureLimit < 1)
@@ -212,10 +212,9 @@ class MemberPictureFeedUpload extends Module
         $objForm->setFormActionFromUri($url);
 
         // Add some fields
-
         $objForm->addFormField('fileupload', array(
             'label'     => $GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadLabel'],
-            'inputType' => 'fineUploaderMemberPictureFeed',
+            'inputType' => 'fineUploader',
             'eval'      => array('extensions'   => 'jpg,jpeg',
                                  'storeFile'    => true,
                                  'addToDbafs'   => true,
@@ -241,6 +240,13 @@ class MemberPictureFeedUpload extends Module
         $objWidgetFileupload->addAttribute('accept', '.jpg, .jpeg');
         $objWidgetFileupload->storeFile = true;
 
+        // Overwrite uploader template
+        if ($this->memberPictureFeedUploadCustomUploaderTpl !== '')
+        {
+            $objWidgetFileupload->template = $this->memberPictureFeedUploadCustomUploaderTpl;
+        }
+
+
         // validate() also checks whether the form has been submitted
         if ($objForm->validate() && Input::post('FORM_SUBMIT') === $objForm->getFormId())
         {
@@ -261,6 +267,7 @@ class MemberPictureFeedUpload extends Module
                             //Check if upload limit is reached
                             if ($this->countUserImages() >= $this->memberPictureFeedUploadPictureLimit && $this->memberPictureFeedUploadPictureLimit > 0)
                             {
+                                Dbafs::deleteResource($objModel->path);
                                 $objFile->delete();
                                 $objWidgetFileupload->addError($GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReachedDuringUploadProcess']);
                             }
@@ -271,6 +278,7 @@ class MemberPictureFeedUpload extends Module
                                 $newPath = dirname($objModel->path) . '/' . $newFilename;
                                 Files::getInstance()->rename($objFile->path, $newPath);
                                 Dbafs::addResource($newPath);
+                                Dbafs::deleteResource($objModel->path);
 
                                 $objModel = FilesModel::findByPath($newPath);
                                 $objModel->isMemberPictureFeed = true;
@@ -279,6 +287,9 @@ class MemberPictureFeedUpload extends Module
                                 $objModel->memberPictureFeedUploadTime = time();
                                 $objModel->save();
                                 $this->resizeUploadedImage($objModel->path);
+
+                                // Flash message
+                                $this->setFlashMessage($this->flashMessageKey, sprintf($GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadSuccess'], $objModel->name));
 
                                 // Log
                                 $strText = sprintf('User with username %s has uploadad a new picture ("%s") for the member-picture-feed.', $this->objUser->username, $objModel->path);
@@ -292,11 +303,9 @@ class MemberPictureFeedUpload extends Module
 
             if (!$objWidgetFileupload->hasErrors())
             {
-                unset($_SESSION['FILES']);
                 // Reload page
                 $this->reload();
             }
-
         }
 
         unset($_SESSION['FILES']);
@@ -487,9 +496,7 @@ class MemberPictureFeedUpload extends Module
             $logger->log(LogLevel::INFO, $strText, array('contao' => new ContaoContext(__METHOD__, TL_FILES)));
 
             // Set flash bag message
-            $session = System::getContainer()->get('session');
-            $flashBag = $session->getFlashBag();
-            $flashBag->set('mod_member_picture_feed_upload', sprintf($GLOBALS['TL_LANG']['MSC']['fileExceeds'], $objFile->basename));
+            $this->setFlashMessage($this->flashMessageKey, sprintf($GLOBALS['TL_LANG']['MSC']['fileExceeds'], $objFile->basename));
             return false;
         }
 
@@ -523,9 +530,7 @@ class MemberPictureFeedUpload extends Module
             $this->blnHasResized = true;
 
             // Set flash bag message
-            $session = System::getContainer()->get('session');
-            $flashBag = $session->getFlashBag();
-            $flashBag->set('mod_member_picture_feed_upload', sprintf($GLOBALS['TL_LANG']['MSC']['fileResized'], $objFile->basename));
+            $this->setFlashMessage($this->flashMessageKey, sprintf($GLOBALS['TL_LANG']['MSC']['fileResized'], $objFile->basename));
             return true;
         }
 
@@ -581,6 +586,59 @@ class MemberPictureFeedUpload extends Module
 
         imagedestroy($source);
         return true;
+    }
+
+    /**
+     * @param $key
+     * @param string $message
+     */
+    protected function setFlashMessage($key, $message = '')
+    {
+        if (!isset($_SESSION[$key]))
+        {
+            $_SESSION[$key] = array();
+
+        }
+        $_SESSION[$key][] = $message;
+    }
+
+    /**
+     * @param $key
+     * @return mixed
+     */
+    protected function getFlashMessage($key)
+    {
+        if (!isset($_SESSION[$key]))
+        {
+            $_SESSION[$key] = array();
+
+        }
+        return $_SESSION[$key];
+    }
+
+    /**
+     * @param $key
+     */
+    protected function unsetFlashMessage($key)
+    {
+        if (isset($_SESSION[$key]))
+        {
+            $_SESSION[$key] = null;
+            unset($_SESSION[$key]);
+        }
+    }
+
+    /**
+     * @param $key
+     * @return bool
+     */
+    protected function hasFlashMessage($key)
+    {
+        if (isset($_SESSION[$key]) && !empty($_SESSION[$key]))
+        {
+            return true;
+        }
+        return false;
     }
 
 }

@@ -11,8 +11,9 @@ $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'] = "Du hast bereits
 $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReachedDuringUploadProcess'] = "Das Upload-Limit wurde erreicht. Es konnten nicht alle Fotos hochgeladen werden.";
 $GLOBALS['TL_LANG']['MSC']['memberPictureFeedUploadBtnlLabel'] = "Änderungen übernehmen";
 $GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadLabel'] = "Bilddatei auswählen";
+$GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadSuccess'] = "Bilddatei %s wurde erfolgreich hochgeladen.";
 
 
 // Fineuploader
-$GLOBALS['TL_LANG']['MSC']['memberPictureFeed_fineuploader_upload'] = "Hier klicken oder Dateien ablegen";
+$GLOBALS['TL_LANG']['MSC']['memberPictureFeed_fineuploader_upload'] = "Hier klicken oder Dateien zum Hochladen hierhin ziehen.";
 
