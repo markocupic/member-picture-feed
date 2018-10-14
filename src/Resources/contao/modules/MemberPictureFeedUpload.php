@@ -269,6 +269,7 @@ class MemberPictureFeedUpload extends Module
                             {
                                 Dbafs::deleteResource($objModel->path);
                                 $objFile->delete();
+                                Dbafs::updateFolderHashes($objUploadFolder->path);
                                 $objWidgetFileupload->addError($GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReachedDuringUploadProcess']);
                             }
                             else
@@ -279,6 +280,7 @@ class MemberPictureFeedUpload extends Module
                                 Files::getInstance()->rename($objFile->path, $newPath);
                                 Dbafs::addResource($newPath);
                                 Dbafs::deleteResource($objModel->path);
+                                Dbafs::updateFolderHashes($objUploadFolder->path);
 
                                 $objModel = FilesModel::findByPath($newPath);
                                 $objModel->isMemberPictureFeed = true;

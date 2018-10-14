@@ -85,15 +85,9 @@
                                 'action': 'removeImage',
                                 'fileId': fileId
                             }).done(function (json) {
-                                json = $.parseJSON(json);
-                                if (json.status != 'success') {
-                                    console.log(json);
-                                }
-                                elImage.fadeOut(400, function () {
-                                    $(this).remove();
-                                    location.reload();
-                                });
+                                location.reload();
                             });
+                            $(elImage).remove();
                         }
                     }
                 });
