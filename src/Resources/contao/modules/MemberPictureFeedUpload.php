@@ -275,7 +275,7 @@ class MemberPictureFeedUpload extends Module
                             else
                             {
                                 // Rename file
-                                $newFilename = sprintf('%s-%s.%s', $this->objUser->id, time(), $objFile->extension);
+                                $newFilename = sprintf('%s-%s.%s', time(), $this->objUser->id, $objFile->extension);
                                 $newPath = dirname($objModel->path) . '/' . $newFilename;
                                 Files::getInstance()->rename($objFile->path, $newPath);
                                 Dbafs::addResource($newPath);
