@@ -19,7 +19,7 @@
     {{br}}
     <hr>
     {{br}}
-    <ul class="row">
+    <ul class="row tiny-gutter equal-height">
         <?php while($this->pictures->next()): ?>
         <li class="member-picture-feed-thumb col-6 col-lg-3" data-file-id="<?=$this->pictures->id ?>" data-src="<?=$this->pictures->path ?>">
             <?= $this->getImageHtml($this->pictures->id) ?>
