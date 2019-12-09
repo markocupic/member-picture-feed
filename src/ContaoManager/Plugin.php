@@ -12,13 +12,15 @@ namespace Markocupic\MemberPictureFeedBundle\ContaoManager;
 use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
 use Contao\ManagerPlugin\Bundle\BundlePluginInterface;
 use Contao\ManagerPlugin\Bundle\Parser\ParserInterface;
+use Contao\ManagerPlugin\Routing\RoutingPluginInterface;
+use Symfony\Component\Config\Loader\LoaderResolverInterface;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
  * Class Plugin
- * Plugin for the Contao Manager
- * @package Markocupic\MemberPictureFeed\ContaoManager
+ * @package Markocupic\MemberPictureFeedBundle\ContaoManager
  */
-class Plugin implements BundlePluginInterface
+class Plugin implements BundlePluginInterface, RoutingPluginInterface
 {
     /**
      * {@inheritdoc}
@@ -30,4 +32,20 @@ class Plugin implements BundlePluginInterface
                 ->setLoadAfter(['Contao\CoreBundle\ContaoCoreBundle'])
         ];
     }
+
+    /**
+     * @param LoaderResolverInterface $resolver
+     * @param KernelInterface $kernel
+     * @return null|\Symfony\Component\Routing\RouteCollection
+     * @throws \Exception
+     */
+    public function getRouteCollection(LoaderResolverInterface $resolver, KernelInterface $kernel)
+    {
+        $file = __DIR__ . '/../Resources/config/routing.yml';
+        return $resolver->resolve($file)->load($file);
+    }
 }
+
+
+
+

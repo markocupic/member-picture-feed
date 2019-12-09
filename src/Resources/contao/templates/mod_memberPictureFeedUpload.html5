@@ -73,16 +73,16 @@
         (function ($) {
             $(document).ready(function () {
                 "use strict";
+
                 $('.remove-image').on('click touchmove', function (e) {
                     e.preventDefault();
                     var elImage = $(this).closest('[data-file-id]');
                     if (elImage.length) {
                         var fileId = $(elImage).data('file-id');
                         if (fileId !== undefined) {
-                            var jqxhr = $.post(window.location.href, {
+                            var jqxhr = jQuery.post('_member_picture_feed_xhr/remove_image', {
                                 'REQUEST_TOKEN': '{{request_token}}',
                                 'xhr': 'true',
-                                'action': 'removeImage',
                                 'fileId': fileId
                             }).done(function (json) {
                                 location.reload();
@@ -98,10 +98,9 @@
                     if (elImage.length) {
                         var fileId = $(elImage).data('file-id');
                         if (fileId !== undefined) {
-                            var jqxhr = $.post(window.location.href, {
+                            var jqxhr = jQuery.post('_member_picture_feed_xhr/rotate_image', {
                                 'REQUEST_TOKEN': '{{request_token}}',
                                 'xhr': 'true',
-                                'action': 'rotateImage',
                                 'fileId': fileId
                             }).done(function (json) {
                                 json = $.parseJSON(json);
@@ -127,9 +126,10 @@
                             $(modal).find('.image-full-res').attr('src', filePath);
                             //$(modal).attr('data-item', item);
 
-                            var jqxhr = $.post(window.location.href, {
+                            var jqxhr = jQuery.post('_member_picture_feed_xhr/get_caption', {
                                 'REQUEST_TOKEN': '{{request_token}}',
-                                'action': 'getCaption',
+                                'pageId': '{{page::id}}',
+                                'pageLanguage': '{{page::language}}',
                                 'fileId': fileId
                             }).done(function (json) {
                                 json = $.parseJSON(json);
@@ -157,10 +157,10 @@
                     var photographer = $(modal).find('#imagePhotographerInput').val();
                     $(modal).modal('hide');
 
-                    var jqxhr = $.post(window.location.href, {
+                    var jqxhr = jQuery.post('_member_picture_feed_xhr/set_caption', {
                         'REQUEST_TOKEN': '{{request_token}}',
-                        'action': 'setCaption',
                         'fileId': fileId,
+                        'pageLanguage': '{{page::language}}',
                         'caption': caption,
                         'photographer': photographer
                     }).done(function (json) {
@@ -168,7 +168,7 @@
                             //console.log(json);
                         }
                     }).always(function () {
-                        window.location.reload();
+                        //window.location.reload();
                     });
                 });
             });

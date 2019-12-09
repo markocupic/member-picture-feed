@@ -97,12 +97,7 @@ class MemberPictureFeedUpload extends Module
             return '';
         }
 
-        // Handle ajax requests
-        if ((!is_array($_FILES) || empty($_FILES)) && Environment::get('isAjaxRequest'))
-        {
-            $this->handleAjaxRequest();
-            exit();
-        }
+
 
         return parent::generate();
     }
@@ -324,146 +319,7 @@ class MemberPictureFeedUpload extends Module
         return $objPicturesCount->numRows;
     }
 
-    /**
-     * @return $this
-     */
-    protected function handleAjaxRequest()
-    {
-        // Ajax request: action=removeImage
-        if (Input::post('action') === 'removeImage' && Input::post('fileId') != '')
-        {
-            $blnSuccess = 'error';
-            $objFile = FilesModel::findByPk(Input::post('fileId'));
-            if ($objFile !== null)
-            {
-                if ($objFile->memberPictureFeedUserId === $this->objUser->id)
-                {
-                    $oFile = new File($objFile->path);
-                    if (is_file(TL_ROOT . '/' . $objFile->path))
-                    {
-                        $res = $objFile->path;
-                        $oFile->delete();
-                        Dbafs::deleteResource($res);
-                        Dbafs::updateFolderHashes(dirname($res));
-                        $blnSuccess = 'success';
-                    }
-                }
-            }
-            $arrJson = array('status' => $blnSuccess);
-            echo \GuzzleHttp\json_encode($arrJson);
-            exit();
-        }
 
-        // Ajax request: action=rotateImage
-        if (Input::post('action') === 'rotateImage' && Input::post('fileId') != '')
-        {
-            $blnSuccess = 'error';
-            $objFile = FilesModel::findByPk(Input::post('fileId'));
-            if ($objFile !== null)
-            {
-                if ($objFile->memberPictureFeedUserId === $this->objUser->id)
-                {
-                    $this->rotateImage($objFile->id);
-                    $blnSuccess = 'success';
-                }
-            }
-            $arrJson = array('status' => $blnSuccess);
-            echo \GuzzleHttp\json_encode($arrJson);
-            exit();
-        }
-
-
-        // Ajax request: action=getCaption
-        if (Input::post('action') === 'getCaption' && Input::post('fileId') != '')
-        {
-
-            $objFile = FilesModel::findByPk(Input::post('fileId'));
-            if ($objFile !== null)
-            {
-                if ($objFile->memberPictureFeedUserId === $this->objUser->id)
-                {
-
-                    // get meta data
-                    global $objPage;
-                    $arrMeta = Frontend::getMetaData($objFile->meta, $objPage->language);
-                    if (empty($arrMeta) && $objPage->rootFallbackLanguage !== null)
-                    {
-                        $arrMeta = Frontend::getMetaData($objFile->meta, $objPage->rootFallbackLanguage);
-                    }
-
-                    if (!isset($arrMeta['caption']))
-                    {
-                        $caption = '';
-                    }
-                    else
-                    {
-                        $caption = $arrMeta['caption'];
-                    }
-
-                    if (!isset($arrMeta['photographer']))
-                    {
-                        $photographer = $this->objUser->firstname . ' ' . $this->objUser->lastname;
-                    }
-                    else
-                    {
-                        $photographer = $arrMeta['photographer'];
-                        if ($photographer === '')
-                        {
-                            $photographer = $this->objUser->firstname . ' ' . $this->objUser->lastname;
-                        }
-                    }
-                    $response = array(
-                        'status'       => 'success',
-                        'caption'      => html_entity_decode($caption),
-                        'photographer' => $photographer,
-                    );
-                    echo \GuzzleHttp\json_encode($response);
-                    exit();
-                }
-            }
-            echo \GuzzleHttp\json_encode(array('status' => 'error'));
-            exit();
-        }
-
-        // Ajax request: action=setCaption
-        if (Input::post('action') === 'setCaption' && Input::post('fileId') != '')
-        {
-            $objUser = FrontendUser::getInstance();
-            if ($objUser === null)
-            {
-                echo \GuzzleHttp\json_encode(array('status' => 'error'));
-                exit;
-            }
-
-            $objFile = FilesModel::findByPk(Input::post('fileId'));
-            if ($objFile !== null)
-            {
-                if ($objFile->memberPictureFeedUserId === $this->objUser->id)
-                {
-                    // get meta data
-                    global $objPage;
-                    if (!isset($arrMeta[$objPage->language]))
-                    {
-                        $arrMeta[$objPage->language] = array(
-                            'title'        => '',
-                            'alt'          => '',
-                            'link'         => '',
-                            'caption'      => '',
-                            'photographer' => '',
-                        );
-                    }
-                    $arrMeta[$objPage->language]['caption'] = Input::post('caption');
-                    $arrMeta[$objPage->language]['photographer'] = Input::post('photographer') ?: $objUser->firstname . ' ' . $objUser->lastname;
-
-                    $objFile->meta = serialize($arrMeta);
-                    $objFile->save();
-                    echo \GuzzleHttp\json_encode(array('status' => 'success'));
-                    exit;
-                }
-            }
-        }
-        echo \GuzzleHttp\json_encode(array('status' => 'error'));
-    }
 
     /**
      * Resize an uploaded image if necessary
@@ -539,56 +395,6 @@ class MemberPictureFeedUpload extends Module
         return false;
     }
 
-    /**
-     * Rotate an image clockwise by 90°
-     * @param $id
-     * @return bool
-     * @throws \Exception
-     */
-    protected function rotateImage($id)
-    {
-        $angle = 90;
-
-        $objFiles = FilesModel::findById($id);
-        if ($objFiles === null)
-        {
-            return false;
-        }
-
-        $src = $objFiles->path;
-
-        $rootDir = System::getContainer()->getParameter('kernel.project_dir');
-
-        if (!file_exists($rootDir . '/' . $src))
-        {
-            Message::addError(sprintf('File "%s" not found.', $src));
-            return false;
-        }
-
-        $objFile = new File($src);
-        if (!$objFile->isGdImage)
-        {
-            Message::addError(sprintf('File "%s" could not be rotated because it is not an image.', $src));
-            return false;
-        }
-
-        if (!function_exists('imagerotate'))
-        {
-            Message::addError(sprintf('PHP function "%s" is not installed.', 'imagerotate'));
-            return false;
-        }
-
-        $source = imagecreatefromjpeg($rootDir . '/' . $src);
-
-        //rotate
-        $imgTmp = imagerotate($source, $angle, 0);
-
-        // Output
-        imagejpeg($imgTmp, $rootDir . '/' . $src);
-
-        imagedestroy($source);
-        return true;
-    }
 
     /**
      * @param $key
