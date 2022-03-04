@@ -1,0 +1,6 @@
+services:
+
+  Markocupic\MemberPictureFeedBundle\Controller\AjaxController:
+    calls:
+      - [ 'setContainer', [ '@Psr\Container\ContainerInterface' ] ]
+    public: true
