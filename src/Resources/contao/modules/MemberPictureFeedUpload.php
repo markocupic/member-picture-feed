@@ -23,7 +23,6 @@ use Contao\BackendTemplate;
 use Contao\FrontendUser;
 use Contao\StringUtil;
 use Contao\Validator;
-use Patchwork\Utf8;
 use Haste\Form\Form;
 use Contao\Input;
 use Contao\Environment;
@@ -79,7 +78,7 @@ class MemberPictureFeedUpload extends Module
             /** @var BackendTemplate|object $objTemplate */
             $objTemplate = new BackendTemplate('be_wildcard');
 
-            $objTemplate->wildcard = '### ' . Utf8::strtoupper($GLOBALS['TL_LANG']['FMD']['memberPictureFeedUpload'][0]) . ' ###';
+            $objTemplate->wildcard = '### ' . $GLOBALS['TL_LANG']['FMD']['memberPictureFeedUpload'][0] . ' ###';
             $objTemplate->title = $this->headline;
             $objTemplate->id = $this->id;
             $objTemplate->link = $this->name;
