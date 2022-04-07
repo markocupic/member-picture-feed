@@ -22,9 +22,9 @@
     "source": "https://github.com/markocupic/member-picture-feed"
   },
   "require": {
-    "contao/core-bundle": ">=4.4",
-    "codefog/contao-haste": "^4",
-    "terminal42/contao-fineuploader": "^2.1"
+    "contao/core-bundle": "^4.9",
+    "codefog/contao-haste": "^4.0",
+    "terminal42/contao-fineuploader": "^3.2.0"
   },
   "autoload": {
     "psr-4": {
