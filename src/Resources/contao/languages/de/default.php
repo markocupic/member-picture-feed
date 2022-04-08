@@ -17,3 +17,5 @@ $GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadSuccess'] = "Bilddatei %s
 // Fineuploader
 $GLOBALS['TL_LANG']['MSC']['memberPictureFeed_fineuploader_upload'] = "Hier klicken oder Dateien zum Hochladen hierhin ziehen.";
 
+// Override fineuploader language strings
+$GLOBALS['TL_LANG']['MPF']['fineuploader.upload'] = 'Bilder auswählen';

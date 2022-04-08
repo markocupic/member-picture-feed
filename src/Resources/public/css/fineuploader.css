@@ -1,40 +1,51 @@
-.fineuploader-container {
-    border: 2px dashed #ccc !important;
-    padding: 1rem 2rem;
+/*
+ * This file is part of Member Picture Feed Bundle.
+ *
+ * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * @license GPL-3.0-or-later
+ * For the full copyright and license information,
+ * please view the LICENSE file that was distributed with this source code.
+ * @link https://github.com/markocupic/member-picture-feed
+ */
+
+.fineuploader-wrapper .fineuploader-container {
+    border: 2px dashed #ccc;
+    padding: 2rem;
+    min-height: 8rem;
 }
 
-.qq-upload-button-selector.qq-upload-button {
-    background-color: #0082c7 !important;
-    color: #fff !important;
-    padding-left: 10px;
-    padding-right: 10px;
+.fineuploader-wrapper .fineuploader-container:hover {
+    cursor: pointer;
 }
 
-.qq-upload-button-selector.qq-upload-button:hover {
-    background-color: #be0b15 !important;
-    color: #fff !important;
+.fineuploader-wrapper .qq-upload-button-selector.qq-upload-button {
+    background-color: #0082c7;
+    color: #fff;
+    margin-top: 2rem;
+    border-color: #0082c7;
+    line-height: 1.5;
+    padding: 0.75rem 1.25rem;
 }
 
-.qq-progress-bar {
-    background: #0082c7 !important;
-    border-radius: 2px !important;
+.fineuploader-wrapper .qq-upload-button-selector.qq-upload-button:hover {
+    background-color: #005e88;
+    border-color: #005e88;
+    color: #fff;
 }
 
-.qq-upload-button-selector.qq-upload-button {
-    width: 250px !important;
+.fineuploader-wrapper .qq-progress-bar {
+    background: #0082c7;
+    border-radius: 2px;
 }
 
-.qq-upload-list-selector.qq-upload-list {
-    margin-top: 10px !important;
+.fineuploader-wrapper .qq-upload-list-selector.qq-upload-list {
+    margin-top: 10px;
 }
 
-.qq-upload-list-selector.qq-upload-list li {
+.fineuploader-wrapper .qq-upload-list-selector.qq-upload-list li {
     margin-top: 5px !important;
 }
 
-.qq-total-progress-bar-container-selector.qq-total-progress-bar-container {
-    margin-left: 0 !important;
+.fineuploader-wrapper .qq-total-progress-bar-container-selector.qq-total-progress-bar-container {
+    margin-left: 0;
 }
-
-
-
