@@ -12,10 +12,5 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/member-picture-feed
  */
 
-use Markocupic\MemberPictureFeed\Contao\Classes\MemberPictureFeed;
-
-// Hooks
-$GLOBALS['TL_HOOKS']['closeAccount'][] = [MemberPictureFeed::class, 'closeAccountHook'];
-
 // CSS
 $GLOBALS['TL_CSS'][] = 'bundles/markocupicmemberpicturefeed/css/fineuploader.min.css|static';
