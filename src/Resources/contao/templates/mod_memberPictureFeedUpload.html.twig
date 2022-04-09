@@ -1,0 +1,76 @@
+{% extends '@Contao/block_unsearchable' %}
+
+{% block content %}
+
+    {% if hasMessages %}
+        {% for message in messages %}
+            <p class="tl_confirm alert alert-info">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    {% if form %}
+        {{ form|raw }}
+    {% endif %}
+
+    {% if hasGallery %}
+        <br>
+        <hr>
+        <br>
+        <ul class="row tiny-gutter equal-height">
+            {% for picture in pictures %}
+                <li class="member-picture-feed-thumb col-6 col-lg-3" data-file-id="{{ picture.data.id }}" data-src="{{ picture.data.path }}">
+                    {{ picture.picture|raw }}
+                    <div class="member-picture-feed-upload-time-overlay">
+                        {{ picture.data.memberPictureFeedUploadTimeFormatted }}
+                    </div>
+                    <div class="member-picture-feed-thumb-buttons-container d-flex">
+                        <button class="btn btn-danger remove-image" title="Bild löschen"><i class="fal fa-trash"></i></button>
+                        <button class="btn btn-danger add-caption" title="Bildunterschrift hinzufügen"><i class="fal fa-pencil"></i></button>
+                        <button class="btn btn-danger rotate-image" title="Bild 90° im GUZG drehen"><i class="fal fa-history"></i></button>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <!--modal -->
+        <div class="modal fade member-picture-feed-caption-modal" tabindex="-1" role="dialog" aria-labelledby="ModalImageCaption" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="ModalImageCaption">Bildeschreibung</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
+                    </div>
+                    <div class="modal-body">
+                        <figure>
+                            <img class="image-full-res" src=""/>
+                        </figure>
+                        <br>
+                        <div class="form-group">
+                            <label for="imageCaptionInput">Bildbeschreibung</label>
+                            <input class="form-control" id="imageCaptionInput" name="image-caption" type="text" maxlength="60" placeholder="">
+                        </div>
+                        <br>
+                        <div class="form-group">
+                            <label for="imagePhotographerInput">Photograph/Bildeigent&uuml;mer</label>
+                            <input class="form-control" id="imagePhotographerInput" name="image-photographer" type="text" placeholder="">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="saveCaptionButton" class="btn btn-primary">Speichern</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- end modal -->
+
+        <script src="bundles/markocupicmemberpicturefeed/js/gallery.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const gallery = new MemberPictureFeedUploadGallery('{{ requestToken }}','{{ page.id }}','{{ page.language }}');
+                gallery.initialize();
+            });
+        </script>
+    {% endif %}
+
+
+{% endblock %}

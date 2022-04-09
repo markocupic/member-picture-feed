@@ -14,205 +14,274 @@ declare(strict_types=1);
 
 namespace Markocupic\MemberPictureFeed\Controller;
 
-use Contao\CoreBundle\Exception\ResponseException;
+use Contao\CoreBundle\Framework\Adapter;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Dbafs;
-use Contao\Environment;
 use Contao\File;
 use Contao\FilesModel;
 use Contao\Frontend;
 use Contao\FrontendUser;
-use Contao\Input;
+use Contao\ManagerBundle\HttpKernel\ContaoKernel;
 use Contao\PageModel;
-use Markocupic\MemberPictureFeed\Contao\Classes\MemberPictureFeed;
+use Markocupic\MemberPictureFeed\Image\ImageRotate;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Security;
 
-/**
- * Class AjaxController.
- */
 class AjaxController extends AbstractController
 {
     private ContaoFramework $framework;
+    private RequestStack $requestStack;
+    private Security $security;
+    private ImageRotate $imageRotate;
+    private ContaoKernel $kernel;
+    private string $projectDir;
 
-    public function __construct(ContaoFramework $framework)
+    // Adapters
+    private Adapter $dbafs;
+    private Adapter $filesModel;
+    private Adapter $frontend;
+    private Adapter $pageModel;
+
+    public function __construct(ContaoFramework $framework, RequestStack $requestStack, Security $security, ImageRotate $imageRotate, ContaoKernel $kernel, string $projectDir)
     {
         $this->framework = $framework;
+        $this->requestStack = $requestStack;
+        $this->security = $security;
+        $this->imageRotate = $imageRotate;
+        $this->kernel = $kernel;
+        $this->projectDir = $projectDir;
+
+        // Adapters
+        $this->dbafs = $this->framework->getAdapter(Dbafs::class);
+        $this->filesModel = $this->framework->getAdapter(FilesModel::class);
+        $this->frontend = $this->framework->getAdapter(Frontend::class);
+        $this->pageModel = $this->framework->getAdapter(PageModel::class);
     }
 
     /**
-     * Handles ajax requests.
+     * Delete image.
      *
      * @Route("/_member_picture_feed_xhr/remove_image", name="member_picture_feed_xhr_remove_image", defaults={"_scope" = "frontend", "_token_check" = true})
+     *
+     * @throws \Exception
      */
-    public function removeImageAction(): void
+    public function removeImageAction(): JsonResponse
     {
         $this->framework->initialize(true);
 
+        $request = $this->requestStack->getCurrentRequest();
+
         // Do allow only xhr requests
-        if (false === Environment::get('isAjaxRequest')) {
+        if (!$request->isXmlHttpRequest()) {
             throw new NotFoundHttpException('The route "/_member_picture_feed_xhr" is allowed to xhr requests only.');
+        }
+
+        $objUser = $this->security->getUser();
+
+        if (!$objUser instanceof FrontendUser) {
+            throw new \Exception('Not authorized. Please log in as a Contao frontend user.', Response::HTTP_UNAUTHORIZED);
         }
 
         // Ajax request: action=removeImage
-        if ('' !== Input::post('fileId')) {
-            $blnSuccess = 'error';
+        if ($request->request->has('fileId')) {
+            $objFile = $this->filesModel->findByPk($request->request->get('fileId'));
 
-            if (null !== ($objUser = FrontendUser::getInstance())) {
-                $objFile = FilesModel::findByPk(Input::post('fileId'));
+            if (null !== $objFile) {
+                if ($objFile->memberPictureFeedUserId === $objUser->id) {
+                    $oFile = new File($objFile->path);
 
-                if (null !== $objFile) {
-                    if ($objFile->memberPictureFeedUserId === $objUser->id) {
-                        $oFile = new File($objFile->path);
+                    if (is_file($this->projectDir.'/'.$objFile->path)) {
+                        $res = $objFile->path;
+                        $oFile->delete();
+                        $this->dbafs->deleteResource($res);
+                        $this->dbafs->updateFolderHashes(\dirname($res));
 
-                        if (is_file(TL_ROOT.'/'.$objFile->path)) {
-                            $res = $objFile->path;
-                            $oFile->delete();
-                            Dbafs::deleteResource($res);
-                            Dbafs::updateFolderHashes(\dirname($res));
-                            $blnSuccess = 'success';
-                        }
+                        $arrJson = [
+                            'status' => 'success',
+                            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Successfully deleted image.' : null,
+                        ];
+
+                        return new JsonResponse($arrJson);
                     }
                 }
-                $arrJson = ['status' => $blnSuccess];
             }
-
-            throw new ResponseException(new JsonResponse($arrJson));
         }
 
-        throw new ResponseException(new JsonResponse(['status' => 'error']));
+        $arrJson = [
+            'status' => 'error',
+            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Removing image failed.' : null,
+        ];
+
+        return new JsonResponse($arrJson);
     }
 
     /**
-     * Handles ajax requests.
+     * Rotate image.
      *
      * @Route("/_member_picture_feed_xhr/rotate_image", name="member_picture_feed_xhr_rotate_image", defaults={"_scope" = "frontend", "_token_check" = true})
+     *
+     * @throws \ImagickException
+     * @throws \Exception
      */
-    public function rotateImageAction(): void
+    public function rotateImageAction(): JsonResponse
     {
-        $this->container->get('contao.framework')->initialize();
+        $this->framework->initialize();
+
+        $request = $this->requestStack->getCurrentRequest();
 
         // Do allow only xhr requests
-        if (false === Environment::get('isAjaxRequest')) {
+        if (!$request->isXmlHttpRequest()) {
             throw new NotFoundHttpException('The route "/_member_picture_feed_xhr" is allowed to xhr requests only.');
         }
 
-        // Ajax request: action=rotateImage
-        if ('' !== Input::post('fileId')) {
-            $blnSuccess = 'error';
+        // Check has logged in
+        $objUser = $this->security->getUser();
 
-            if (null !== ($objUser = FrontendUser::getInstance())) {
-                $objFile = FilesModel::findByPk(Input::post('fileId'));
-
-                if (null !== $objFile) {
-                    if ($objFile->memberPictureFeedUserId === $objUser->id) {
-                        MemberPictureFeed::rotateImage($objFile->id);
-                        $blnSuccess = 'success';
-                    }
-                }
-                $arrJson = ['status' => $blnSuccess];
-            }
-
-            throw new ResponseException(new JsonResponse($arrJson));
+        if (!$objUser instanceof FrontendUser) {
+            throw new \Exception('Not authorized. Please log in as a Contao frontend user.', Response::HTTP_UNAUTHORIZED);
         }
 
-        throw new ResponseException(new JsonResponse(['status' => 'error']));
+        if ($request->request->has('fileId')) {
+            $objFile = $this->filesModel->findByPk($request->request->get('fileId'));
+
+            if (null !== $objFile) {
+                if ((int) $objFile->memberPictureFeedUserId === (int) $objUser->id) {
+                    $path = $this->projectDir.'/'.$objFile->path;
+
+                    if ($this->imageRotate->rotate($path)) {
+                        $arrJson = [
+                            'status' => 'success',
+                            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Successfully rotated image.' : null,
+                        ];
+
+                        return new JsonResponse($arrJson);
+                    }
+                }
+            }
+        }
+
+        $arrJson = [
+            'status' => 'error',
+            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Rotate image failed.' : null,
+        ];
+
+        return new JsonResponse($arrJson);
     }
 
     /**
-     * Handles ajax requests.
+     * Send caption.
      *
-     * @Route("/_member_picture_feed_xhr/get_caption", name="member_picture_feed_xhr_get_caption", defaults={"_scope" = "frontend", "_token_check" = true})
+     * @Route("/_member_picture_feed_xhr/get_image_data", name="member_picture_feed_xhr_get_caption", defaults={"_scope" = "frontend", "_token_check" = true})
+     *
+     * @throws \Exception
      */
-    public function getCaptionAction(): void
+    public function getCaptionAction(): Response
     {
-        $this->container->get('contao.framework')->initialize();
+        $this->framework->initialize();
+
+        $request = $this->requestStack->getCurrentRequest();
 
         // Do allow only xhr requests
-        if (false === Environment::get('isAjaxRequest')) {
+        if (!$request->isXmlHttpRequest()) {
             throw new NotFoundHttpException('The route "/_member_picture_feed_xhr" is allowed to xhr requests only.');
         }
 
-        // Ajax request: action=getCaption
-        if (Input::post('pageLanguage') && '' !== Input::post('fileId')) {
-            $pageLang = Input::post('pageLanguage');
+        // Check has logged in
+        $objUser = $this->security->getUser();
 
-            if (null !== ($objUser = FrontendUser::getInstance())) {
-                if ('' !== $pageLang) {
-                    $objFile = FilesModel::findByPk(Input::post('fileId'));
+        if (!$objUser instanceof FrontendUser) {
+            throw new \Exception('Not authorized. Please log in as a Contao frontend user.', Response::HTTP_UNAUTHORIZED);
+        }
 
-                    if (null !== $objFile) {
-                        if ($objFile->memberPictureFeedUserId === $objUser->id) {
-                            if (null !== ($objPage = PageModel::findByPk(Input::post('pageId')))) {
-                                // get meta data
-                                $arrMeta = Frontend::getMetaData($objFile->meta, $pageLang);
+        if ($request->request->has('pageLanguage') && $request->request->has('fileId')) {
+            $pageLang = $request->request->get('pageLanguage');
 
-                                if (empty($arrMeta) && null !== $objPage->rootFallbackLanguage) {
-                                    $arrMeta = Frontend::getMetaData($objFile->meta, $pageLang);
-                                }
+            $objFile = $this->filesModel->findByPk($request->request->get('fileId'));
 
-                                if (!isset($arrMeta['caption'])) {
-                                    $caption = '';
-                                } else {
-                                    $caption = $arrMeta['caption'];
-                                }
+            if (null !== $objFile) {
+                if ($objFile->memberPictureFeedUserId === $objUser->id) {
+                    if (null !== ($objPage = $this->pageModel->findByPk($request->request->get('pageId')))) {
+                        // get meta data
+                        $arrMeta = $this->frontend->getMetaData($objFile->meta, $pageLang);
 
-                                if (!isset($arrMeta['photographer'])) {
-                                    $photographer = $objUser->firstname.' '.$objUser->lastname;
-                                } else {
-                                    $photographer = $arrMeta['photographer'];
+                        if (empty($arrMeta) && null !== $objPage->rootFallbackLanguage) {
+                            $arrMeta = $this->frontend->getMetaData($objFile->meta, $pageLang);
+                        }
 
-                                    if ('' === $photographer) {
-                                        $photographer = $objUser->firstname.' '.$objUser->lastname;
-                                    }
-                                }
-                                $arrJson = [
-                                    'status' => 'success',
-                                    'caption' => html_entity_decode($caption),
-                                    'photographer' => $photographer,
-                                ];
+                        if (!isset($arrMeta['caption'])) {
+                            $caption = '';
+                        } else {
+                            $caption = $arrMeta['caption'];
+                        }
 
-                                throw new ResponseException(new JsonResponse($arrJson));
+                        if (!isset($arrMeta['photographer'])) {
+                            $photographer = $objUser->firstname.' '.$objUser->lastname;
+                        } else {
+                            $photographer = $arrMeta['photographer'];
+
+                            if ('' === $photographer) {
+                                $photographer = $objUser->firstname.' '.$objUser->lastname;
                             }
                         }
+
+                        $arrJson = [
+                            'status' => 'success',
+                            'caption' => html_entity_decode((string) $caption),
+                            'photographer' => html_entity_decode((string) $photographer),
+                            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Get image data.' : null,
+                        ];
+
+                        return new JsonResponse($arrJson);
                     }
                 }
             }
         }
 
-        throw new ResponseException(new JsonResponse(['status' => 'error']));
+        $arrJson = [
+            'status' => 'error',
+            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Get image data failed.' : null,
+        ];
+
+        return new JsonResponse($arrJson);
     }
 
     /**
-     * Handles ajax requests.
+     * Set caption.
      *
      * @Route("/_member_picture_feed_xhr/set_caption", name="member_picture_feed_xhr_set_caption", defaults={"_scope" = "frontend", "_token_check" = true})
+     *
+     * @throws \Exception
      */
-    public function setCaptionAction(): void
+    public function setCaptionAction(): JsonResponse
     {
-        $this->container->get('contao.framework')->initialize();
+        $this->framework->initialize();
+
+        $request = $this->requestStack->getCurrentRequest();
 
         // Do allow only xhr requests
-        if (false === Environment::get('isAjaxRequest')) {
+        if (!$request->isXmlHttpRequest()) {
             throw new NotFoundHttpException('The route "/_member_picture_feed_xhr" is allowed to xhr requests only.');
         }
 
-        // Ajax request: action=setCaption
-        if (Input::post('pageLanguage') && '' !== Input::post('fileId')) {
-            $objUser = FrontendUser::getInstance();
+        // Check has logged in
+        $objUser = $this->security->getUser();
 
-            if (null === $objUser) {
-                throw new ResponseException(new JsonResponse(['status' => 'error']));
-            }
+        if (!$objUser instanceof FrontendUser) {
+            throw new \Exception('Not authorized. Please log in as a Contao frontend user.', Response::HTTP_UNAUTHORIZED);
+        }
 
-            $objFile = FilesModel::findByPk(Input::post('fileId'));
+        if ($request->request->has('pageLanguage') && $request->request->has('fileId')) {
+            $objFile = $this->filesModel->findByPk($request->request->get('fileId'));
 
             if (null !== $objFile) {
                 if ($objFile->memberPictureFeedUserId === $objUser->id) {
                     // get meta data
-                    $pageLang = Input::post('pageLanguage');
+                    $pageLang = $request->request->get('pageLanguage');
 
                     if ('' !== $pageLang) {
                         if (!isset($arrMeta[$pageLang])) {
@@ -224,18 +293,27 @@ class AjaxController extends AbstractController
                                 'photographer' => '',
                             ];
                         }
-                        $arrMeta[$pageLang]['caption'] = Input::post('caption');
-                        $arrMeta[$pageLang]['photographer'] = Input::post('photographer') ?: $objUser->firstname.' '.$objUser->lastname;
-
+                        $arrMeta[$pageLang]['caption'] = $request->request->get('caption');
+                        $arrMeta[$pageLang]['photographer'] = $request->request->get('photographer') ?: $objUser->firstname.' '.$objUser->lastname;
                         $objFile->meta = serialize($arrMeta);
                         $objFile->save();
 
-                        throw new ResponseException(new JsonResponse(['status' => 'success']));
+                        $arrJson = [
+                            'status' => 'success',
+                            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Successfully saved image caption and photographer name.' : null,
+                        ];
+
+                        return new JsonResponse($arrJson);
                     }
                 }
             }
         }
 
-        throw new ResponseException(new JsonResponse(['status' => 'error']));
+        $arrJson = [
+            'status' => 'error',
+            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Error while trying to save image caption and photographer name.' : null,
+        ];
+
+        return new JsonResponse($arrJson);
     }
 }

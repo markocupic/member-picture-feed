@@ -34,7 +34,7 @@ class MemberPictureFeed
      *
      * @throws \ImagickException
      */
-    public static function rotateImage($fileId, int $angle = 270, string $target = ''): bool
+    public static function rotateImage($fileId, int $angle = 90, string $target = ''): bool
     {
         if (!is_numeric($fileId) && $fileId < 1) {
             return false;

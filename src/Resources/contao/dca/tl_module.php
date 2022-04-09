@@ -19,18 +19,18 @@ $GLOBALS['TL_DCA']['tl_module']['palettes'][MemberPictureFeedUploadController::T
 
 // Fields
 $GLOBALS['TL_DCA']['tl_module']['fields']['memberPictureFeedUploadFolder'] = [
-    'label' => &$GLOBALS['TL_LANG']['tl_module']['memberPictureFeedUploadFolder'],
-    'exclude' => true,
+    'label'     => &$GLOBALS['TL_LANG']['tl_module']['memberPictureFeedUploadFolder'],
+    'exclude'   => true,
     'inputType' => 'fileTree',
-    'eval' => ['fieldType' => 'radio', 'filesOnly' => false, 'mandatory' => true, 'tl_class' => 'clr'],
-    'sql' => 'binary(16) NULL',
+    'eval'      => ['fieldType' => 'radio', 'filesOnly' => false, 'mandatory' => true, 'tl_class' => 'clr'],
+    'sql'       => 'binary(16) NULL',
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['memberPictureFeedUploadPictureLimit'] = [
-    'label' => &$GLOBALS['TL_LANG']['tl_module']['memberPictureFeedUploadPictureLimit'],
-    'exclude' => true,
-    'default' => 3,
+    'label'     => &$GLOBALS['TL_LANG']['tl_module']['memberPictureFeedUploadPictureLimit'],
+    'exclude'   => true,
+    'default'   => 3,
     'inputType' => 'text',
-    'eval' => ['mandatory' => false, 'rgxp' => 'natural', 'tl_class' => 'w50'],
-    'sql' => "smallint(5) unsigned NOT NULL default '0'",
+    'eval'      => ['mandatory' => false, 'rgxp' => 'natural', 'tl_class' => 'w50'],
+    'sql'       => "smallint(5) unsigned NOT NULL default '0'",
 ];

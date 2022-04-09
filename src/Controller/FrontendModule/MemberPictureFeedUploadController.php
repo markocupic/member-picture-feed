@@ -15,35 +15,40 @@ declare(strict_types=1);
 namespace Markocupic\MemberPictureFeed\Controller\FrontendModule;
 
 use Contao\Config;
+use Contao\Controller;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
+use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
+use Contao\CoreBundle\File\Metadata;
+use Contao\CoreBundle\Framework\Adapter;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\CoreBundle\Image\ImageFactory;
+use Contao\CoreBundle\Image\Studio\Studio;
 use Contao\CoreBundle\InsertTag\InsertTagParser;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
-use Contao\Database;
+use Contao\Date;
 use Contao\Dbafs;
-use Contao\Environment;
 use Contao\File;
 use Contao\Files;
 use Contao\FilesModel;
 use Contao\Folder;
 use Contao\Frontend;
 use Contao\FrontendUser;
-use Contao\Input;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\StringUtil;
-use Contao\System;
 use Contao\Template;
 use Contao\Validator;
+use Doctrine\DBAL\Connection;
 use Haste\Form\Form;
-use Psr\Log\LogLevel;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Security;
+use Twig\Environment as EnvironmentTwig;
 
 /**
- * @FrontendModule(MemberPictureFeedUploadController::TYPE)
+ * @FrontendModule(MemberPictureFeedUploadController::TYPE, category="member_picture_feed")
  */
 class MemberPictureFeedUploadController extends AbstractFrontendModuleController
 {
@@ -52,20 +57,63 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
     private const FLASH_MESSAGE_KEY = 'mod_member_picture_feed_upload';
 
     private ContaoFramework $framework;
+    private Connection $connection;
     private Security $security;
     private InsertTagParser $insertTagParser;
-    private ?FrontendUser $user;
-    private array $arrMessages = [];
+    private Studio $studio;
+    private ImageFactory $contaoImageFactory;
+    private EnvironmentTwig $twig;
+    private ContaoCsrfTokenManager $contaoCsrfTokenManager;
+    private string $csrfTokenName;
+    private string $projectDir;
+    private ?LoggerInterface $logger;
 
-    public function __construct(ContaoFramework $framework, Security $security, InsertTagParser $insertTagParser)
+    // Adapters
+    private Adapter $config;
+    private Adapter $controller;
+    private Adapter $date;
+    private Adapter $dbafs;
+    private Adapter $files;
+    private Adapter $filesModel;
+    private Adapter $frontend;
+    private Adapter $stringUtil;
+    private Adapter $validator;
+
+    private ?PageModel $page;
+    private ?FrontendUser $user;
+
+    private array $messages = [];
+
+    public function __construct(ContaoFramework $framework, Connection $connection, Security $security, InsertTagParser $insertTagParser, Studio $studio, ImageFactory $contaoImageFactory, EnvironmentTwig $twig, ContaoCsrfTokenManager $contaoCsrfTokenManager, string $csrfTokenName, string $projectDir, LoggerInterface $logger = null)
     {
         $this->framework = $framework;
+        $this->connection = $connection;
         $this->security = $security;
         $this->insertTagParser = $insertTagParser;
+        $this->studio = $studio;
+        $this->contaoImageFactory = $contaoImageFactory;
+        $this->twig = $twig;
+        $this->contaoCsrfTokenManager = $contaoCsrfTokenManager;
+        $this->csrfTokenName = $csrfTokenName;
+        $this->projectDir = $projectDir;
+        $this->logger = $logger;
+
+        // Load adapters
+        $this->config = $this->framework->getAdapter(Config::class);
+        $this->controller = $this->framework->getAdapter(Controller::class);
+        $this->date = $this->framework->getAdapter(Date::class);
+        $this->dbafs = $this->framework->getAdapter(Dbafs::class);
+        $this->files = $this->framework->getAdapter(Files::class);
+        $this->filesModel = $this->framework->getAdapter(FilesModel::class);
+        $this->frontend = $this->framework->getAdapter(Frontend::class);
+        $this->stringUtil = $this->framework->getAdapter(StringUtil::class);
+        $this->validator = $this->framework->getAdapter(Validator::class);
     }
 
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
     {
+        $this->page = $page;
+
         $user = $this->security->getUser();
 
         if ($user instanceof FrontendUser) {
@@ -82,60 +130,75 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
      */
     public function getResponse(Template $template, ModuleModel $model, Request $request): Response
     {
+        $GLOBALS['TL_JAVASCRIPT'][] = 'bundles/markocupicmemberpicturefeed/js/fineuploader.js|async';
+
         $this->overrideLangStrings();
 
-        $session = System::getContainer()->get('session');
-
         // Get flash bag messages
-        if ($session->isStarted() && $this->hasFlashMessage(self::FLASH_MESSAGE_KEY)) {
-            $this->arrMessages = array_merge($this->arrMessages, $this->getFlashMessage(self::FLASH_MESSAGE_KEY));
+        if ($this->hasFlashMessage(self::FLASH_MESSAGE_KEY)) {
+            $this->messages = array_merge($this->messages, $this->getFlashMessage(self::FLASH_MESSAGE_KEY));
             $this->unsetFlashMessage(self::FLASH_MESSAGE_KEY);
         }
 
         if ($this->countUserImages() < $model->memberPictureFeedUploadPictureLimit || $model->memberPictureFeedUploadPictureLimit < 1) {
-            $template->objUploadForm = $this->generateUploadForm($model, $request);
+            $template->form = $this->generateUploadForm($model, $request);
         } else {
-            $this->arrMessages[] = $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'];
+            $this->messages[] = $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'];
         }
 
-        $objPictures = Database::getInstance()->prepare('SELECT * FROM tl_files WHERE isMemberPictureFeed=? AND memberPictureFeedUserId=? ORDER BY memberPictureFeedUploadTime DESC')->execute('1', $this->user->id);
+        $template->hasGallery = false;
 
-        if ($objPictures->numRows > 0) {
-            $template->hasPictures = true;
-            $template->pictures = $objPictures;
-        }
+        $arrPictures = [];
 
-        // Closure for image html
-        $template->getImageHtml = (
-            function ($fileId) use ($model) {
-                $arrSize = StringUtil::deserialize($model->imgSize, true);
-                $oFile = FilesModel::findByPk($fileId);
+        $stmt = $this->connection->executeQuery('SELECT * FROM tl_files WHERE isMemberPictureFeed = ? AND memberPictureFeedUserId = ? ORDER BY memberPictureFeedUploadTime DESC', ['1', $this->user->id]);
 
-                if (null !== $oFile) {
-                    // get meta data
-                    global $objPage;
-                    $arrMeta = Frontend::getMetaData($oFile->meta, $objPage->language);
+        while (false !== ($rowFile = $stmt->fetchAssociative())) {
+            $arrPicture = [];
 
-                    if (empty($arrMeta) && null !== $objPage->rootFallbackLanguage) {
-                        $arrMeta = Frontend::getMetaData($oFile->meta, $objPage->rootFallbackLanguage);
-                    }
+            $oFile = $this->filesModel->findByUuid($rowFile['uuid']);
 
-                    if ('' === $arrSize[0] && '' === $arrSize[1] && $arrSize[2] > 0) {
-                        $strTag = sprintf('{{picture::%s?size=%s&rel=lightboxlb%s&alt=%s}}', $fileId, $arrSize[2], $model->id, $arrMeta['caption'] ?? '');
-                    } elseif (('' !== $arrSize[0] || '' !== $arrSize[1]) && '' !== $arrSize[2]) {
-                        $strTag = sprintf('{{image::%s?width=%s&height=%s&mode=%s&rel=lightboxlb%s&alt=%s}}', $fileId, $arrSize[0], $arrSize[1], $arrSize[2], $model->id, $arrMeta['caption'] ?? '');
-                    } else {
-                        $strTag = sprintf('{{image::%s?width=400&height=400&mode=crop&rel=lightboxlb%s&alt=%s}}', $fileId, $model->id, $arrMeta['caption'] ?? '');
-                    }
-
-                    return $this->insertTagParser->replaceInline($strTag);
-                }
+            if (!is_file($this->projectDir.'/'.$oFile->path)) {
+                continue;
             }
-        );
 
-        if (!empty($this->arrMessages)) {
+            $arrSize = $this->stringUtil->deserialize($model->imgSize, true);
+
+            $arrMeta = $this->frontend->getMetaData($oFile->meta, $this->page->language);
+
+            if (empty($arrMeta) && null !== $this->page->rootFallbackLanguage) {
+                $arrMeta = $this->frontend->getMetaData($oFile->meta, $this->page->rootFallbackLanguage);
+            }
+
+            // Create figure
+            $figure = $this->studio->createFigureBuilder()
+                ->fromUuid($rowFile['uuid'])
+                ->setSize($arrSize)
+                ->setMetadata(new Metadata($arrMeta))
+                ->buildIfResourceExists()
+                ;
+
+            if ($figure) {
+                $template->hasGallery = true;
+
+                $arrPicture['picture'] = $this->twig->render('@ContaoCore/Image/Studio/figure.html.twig', ['figure' => $figure]);
+                $arrPicture['data'] = $rowFile;
+                $arrPicture['data']['memberPictureFeedUploadTimeFormatted'] = $this->date->parse($this->config->get('dateFormat'), $rowFile['memberPictureFeedUploadTime']);
+
+                $arrPictures[] = $arrPicture;
+            }
+        }
+
+        $template->pictures = $arrPictures;
+
+        $template->requestToken = $this->contaoCsrfTokenManager->getToken($this->csrfTokenName)->getValue();
+
+        $template->page = $this->page->row();
+
+        $template->hasMessages = false;
+
+        if (!empty($this->messages)) {
             $template->hasMessages = true;
-            $template->arrMessages = $this->arrMessages;
+            $template->messages = $this->messages;
         }
 
         return $template->getResponse();
@@ -175,11 +238,13 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
         }
     }
 
+    /**
+     * @return int
+     * @throws \Doctrine\DBAL\Exception
+     */
     protected function countUserImages(): int
     {
-        $objPicturesCount = Database::getInstance()->prepare('SELECT * FROM tl_files WHERE isMemberPictureFeed=? AND memberPictureFeedUserId=?')->execute('1', $this->user->id);
-
-        return $objPicturesCount->numRows;
+        return $this->connection->fetchOne('SELECT COUNT(id) AS numRows FROM tl_files WHERE isMemberPictureFeed = ? AND memberPictureFeedUserId = ?', ['1', $this->user->id]);
     }
 
     /**
@@ -190,8 +255,8 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
         $objUploadFolder = null;
 
         if ('' !== $model->memberPictureFeedUploadFolder) {
-            if (Validator::isBinaryUuid($model->memberPictureFeedUploadFolder)) {
-                $objFilesModel = FilesModel::findByUuid($model->memberPictureFeedUploadFolder);
+            if ($this->validator->isBinaryUuid($model->memberPictureFeedUploadFolder)) {
+                $objFilesModel = $this->filesModel->findByUuid($model->memberPictureFeedUploadFolder);
 
                 if (null !== $objFilesModel) {
                     $objUploadFolder = new Folder($objFilesModel->path);
@@ -203,10 +268,9 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
             throw new \Exception('Image upload directory not set or not found. Please check your module configuration.');
         }
 
-        $objForm = new Form('form-member-picture-feed-upload', 'POST', static fn ($objHaste) => Input::post('FORM_SUBMIT') === $objHaste->getFormId());
+        $objForm = new Form('form-member-picture-feed-upload', 'POST', static fn ($objHaste) => $request->request->get('FORM_SUBMIT') === $objHaste->getFormId());
 
-        $url = Environment::get('uri');
-        $objForm->setFormActionFromUri($url);
+        $objForm->setFormActionFromUri($request->getUri());
 
         // Add some fields
         $objForm->addFormField('fileupload', [
@@ -237,52 +301,56 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
         $objWidgetFileupload->storeFile = true;
 
         // validate() also checks whether the form has been submitted
-        if ($objForm->validate() && Input::post('FORM_SUBMIT') === $objForm->getFormId()) {
+        if ($objForm->validate() && $request->request->get('FORM_SUBMIT') === $objForm->getFormId()) {
             if (!empty($_SESSION['FILES']) && \is_array($_SESSION['FILES'])) {
+                $index = 0;
+
                 foreach ($_SESSION['FILES'] as $file) {
+                    ++$index;
                     $uuid = $file['uuid'];
 
-                    if (Validator::isStringUuid($uuid)) {
-                        $binUuid = StringUtil::uuidToBin($uuid);
-                        $objModel = FilesModel::findByUuid($binUuid);
+                    if ($this->validator->isStringUuid($uuid)) {
+                        $binUuid = $this->stringUtil->uuidToBin($uuid);
+                        $objModel = $this->filesModel->findByUuid($binUuid);
 
                         if (null !== $objModel) {
                             $objFile = new File($objModel->path);
 
-                            //Check if upload limit is reached
+                            // Check if upload limit is reached
                             if ($this->countUserImages() >= $model->memberPictureFeedUploadPictureLimit && $model->memberPictureFeedUploadPictureLimit > 0) {
-                                Dbafs::deleteResource($objModel->path);
+                                $this->dbafs->deleteResource($objModel->path);
                                 $objFile->delete();
-                                Dbafs::updateFolderHashes($objUploadFolder->path);
+                                $this->dbafs->updateFolderHashes($objUploadFolder->path);
                                 $objWidgetFileupload->addError($GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReachedDuringUploadProcess']);
                             } else {
                                 // Rename file
-                                $newFilename = sprintf('%s-%s.%s', time(), $this->user->id, $objFile->extension);
+                                $time = time() + $index;
+                                $newFilename = sprintf('%s-%s.%s', $time, $this->user->id, $objFile->extension);
                                 $newPath = \dirname($objModel->path).'/'.$newFilename;
-                                Files::getInstance()->rename($objFile->path, $newPath);
-                                Dbafs::addResource($newPath);
-                                Dbafs::deleteResource($objModel->path);
-                                Dbafs::updateFolderHashes($objUploadFolder->path);
+                                $this->files->getInstance()->rename($objFile->path, $newPath);
+                                $this->dbafs->addResource($newPath);
+                                $this->dbafs->deleteResource($objModel->path);
+                                $this->dbafs->updateFolderHashes($objUploadFolder->path);
 
-                                $objModel = FilesModel::findByPath($newPath);
+                                $objModel = $this->filesModel->findByPath($newPath);
                                 $objModel->isMemberPictureFeed = true;
                                 $objModel->memberPictureFeedUserId = $this->user->id;
-                                $objModel->tstamp = time();
-                                $objModel->memberPictureFeedUploadTime = time();
+                                $objModel->tstamp = $time;
+                                $objModel->memberPictureFeedUploadTime = $time;
                                 $objModel->save();
 
                                 // Try to resize image
-                                if (!$this->resizeUploadedImage($objModel->path)) {
-                                    $this->setFlashMessage(self::FLASH_MESSAGE_KEY, sprintf($GLOBALS['TL_LANG']['ERR']['memberPictureFeedResizeError'], $objModel->name));
+                                if ($this->resizeUploadedImage($objModel->path)) {
+                                    $this->setFlashMessage(self::FLASH_MESSAGE_KEY, sprintf($GLOBALS['TL_LANG']['ERR']['fileUploadedAndResized'], $objModel->name));
+                                } else {
+                                    $this->setFlashMessage(self::FLASH_MESSAGE_KEY, sprintf($GLOBALS['TL_LANG']['MSC']['fileUploaded'], $objModel->name));
                                 }
 
-                                // Flash message
-                                $this->setFlashMessage(self::FLASH_MESSAGE_KEY, sprintf($GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadSuccess'], $objModel->name));
-
                                 // Log
-                                $strText = sprintf('User with username %s has uploadad a new picture ("%s") for the member-picture-feed.', $this->user->username, $objModel->path);
-                                $logger = System::getContainer()->get('monolog.logger.contao');
-                                $logger->log(LogLevel::INFO, $strText, ['contao' => new ContaoContext(__METHOD__, 'MEMBER PICTURE FEED')]);
+                                if (null !== $this->logger) {
+                                    $strText = sprintf('User with username %s has uploadad a new picture ("%s") for the member-picture-feed.', $this->user->username, $objModel->path);
+                                    $this->logger->info($strText, ['contao' => new ContaoContext(__METHOD__, 'MEMBER PICTURE FEED')]);
+                                }
                             }
                         }
                     }
@@ -291,7 +359,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
 
             if (!$objWidgetFileupload->hasErrors()) {
                 // Reload page
-                $this->redirect($request->getUri());
+                $this->controller->reload();
             }
         }
 
@@ -316,7 +384,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
     private function resizeUploadedImage(string $strImage): bool
     {
         // The feature is disabled
-        if (Config::get('maxImageWidth') < 1) {
+        if ($this->config->get('maxImageWidth') < 1) {
             return false;
         }
 
@@ -326,14 +394,16 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
         if (!$objFile->isSvgImage && !$objFile->isGdImage) {
             return false;
         }
+
         $arrImageSize = $objFile->imageSize;
 
         // The image is too big to be handled by the GD library
-        if ($objFile->isGdImage && ($arrImageSize[0] > Config::get('gdMaxImgWidth') || $arrImageSize[1] > Config::get('gdMaxImgHeight'))) {
+        if ($objFile->isGdImage && ($arrImageSize[0] > $this->config->get('gdMaxImgWidth') || $arrImageSize[1] > $this->config->get('gdMaxImgHeight'))) {
             // Log
-            $strText = 'File "'.$strImage.'" is too big to be resized automatically';
-            $logger = System::getContainer()->get('monolog.logger.contao');
-            $logger->log(LogLevel::INFO, $strText, ['contao' => new ContaoContext(__METHOD__, TL_FILES)]);
+            if (null !== $this->logger) {
+                $strText = 'File "'.$strImage.'" is too big to be resized automatically';
+                $this->logger->info($strText, ['contao' => new ContaoContext(__METHOD__, TL_FILES)]);
+            }
 
             // Set flash bag message
             $this->setFlashMessage(self::FLASH_MESSAGE_KEY, sprintf($GLOBALS['TL_LANG']['MSC']['fileExceeds'], $objFile->basename));
@@ -344,27 +414,24 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
         $blnResize = false;
 
         // The image exceeds the maximum image width
-        if ($arrImageSize[0] > Config::get('maxImageWidth')) {
+        if ($arrImageSize[0] > $this->config->get('maxImageWidth')) {
             $blnResize = true;
-            $intWidth = Config::get('maxImageWidth');
-            $intHeight = round(Config::get('maxImageWidth') * $arrImageSize[1] / $arrImageSize[0]);
+            $intWidth = $this->config->get('maxImageWidth');
+            $intHeight = round($this->config->get('maxImageWidth') * $arrImageSize[1] / $arrImageSize[0]);
             $arrImageSize = [$intWidth, $intHeight];
         }
 
         // The image exceeds the maximum image height
-        if ($arrImageSize[1] > Config::get('maxImageWidth')) {
+        if ($arrImageSize[1] > $this->config->get('maxImageWidth')) {
             $blnResize = true;
-            $intWidth = round(Config::get('maxImageWidth') * $arrImageSize[0] / $arrImageSize[1]);
-            $intHeight = Config::get('maxImageWidth');
+            $intWidth = round($this->config->get('maxImageWidth') * $arrImageSize[0] / $arrImageSize[1]);
+            $intHeight = $this->config->get('maxImageWidth');
             $arrImageSize = [$intWidth, $intHeight];
         }
 
         // Resized successfully
         if ($blnResize) {
-            System::getContainer()
-                ->get('contao.image.image_factory')
-                ->create(TL_ROOT.'/'.$strImage, [$arrImageSize[0], $arrImageSize[1]], TL_ROOT.'/'.$strImage)
-            ;
+            $this->contaoImageFactory->create($this->projectDir.'/'.$strImage, [$arrImageSize[0], $arrImageSize[1]], $this->projectDir.'/'.$strImage);
 
             // Set flash bag message
             $this->setFlashMessage(self::FLASH_MESSAGE_KEY, sprintf($GLOBALS['TL_LANG']['MSC']['fileResized'], $objFile->basename));

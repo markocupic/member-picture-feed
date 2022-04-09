@@ -8,6 +8,10 @@
  * @link https://github.com/markocupic/member-picture-feed
  */
 
+.mod_memberPictureFeedUpload figcaption {
+    display: none;
+}
+
 .fineuploader-wrapper .fineuploader-container {
     border: 2px dashed #ccc;
     padding: 2rem;

@@ -12,18 +12,15 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/member-picture-feed
  */
 
-// miscellaneous
+// Miscellaneous
 $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'] = 'Du hast bereits das Upload Maximum erreicht. Um weitere Bilder hochzuladen, musst du zuerst mindestens ein Bild löschen.';
 $GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReachedDuringUploadProcess'] = 'Das Upload-Limit wurde erreicht. Es konnten nicht alle Fotos hochgeladen werden.';
 $GLOBALS['TL_LANG']['MSC']['memberPictureFeedUploadBtnlLabel'] = 'Änderungen übernehmen';
 $GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadLabel'] = 'Bilddatei auswählen';
-$GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadSuccess'] = 'Bilddatei %s wurde erfolgreich hochgeladen.';
+$GLOBALS['TL_LANG']['MSC']['fileUploadedAndResized'] = 'Bilddatei %s wurde erfolgreich hochgeladen und auf die maximalen Abmessungen verkleinert.';
 
-// error messages
-$GLOBALS['TL_LANG']['ERR']['memberPictureFeedResizeError'] = 'Beim Versuch die Bilddatei %s zur verkleinern ist es zu einem Fehler gekommen.';
-
-// fineuploader
+// Fineuploader
 $GLOBALS['TL_LANG']['MSC']['memberPictureFeed_fineuploader_upload'] = 'Hier klicken oder Dateien zum Hochladen hierhin ziehen.';
 
-// override fineuploader language strings
+// Override fineuploader language strings
 $GLOBALS['TL_LANG']['MPF']['fineuploader.upload'] = 'Bilder auswählen';
