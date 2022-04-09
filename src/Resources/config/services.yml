@@ -1,6 +1,16 @@
 services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: true
+        bind:
+            $projectDir: '%kernel.project_dir%'
 
-  Markocupic\MemberPictureFeedBundle\Controller\AjaxController:
-    calls:
-      - [ 'setContainer', [ '@Psr\Container\ContainerInterface' ] ]
-    public: true
+    Markocupic\MemberPictureFeed\:
+        resource: ../../
+        exclude: ../../{Model,DependencyInjection,Resources}
+
+
+    Markocupic\MemberPictureFeed\Controller\AjaxController:
+        calls:
+            - [ 'setContainer', [ '@Psr\Container\ContainerInterface' ] ]

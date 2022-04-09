@@ -1,5 +1,5 @@
 /*
- * This file is part of Member Picture Feed Bundle.
+ * This file is part of Member Picture Feed.
  *
  * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later

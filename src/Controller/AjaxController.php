@@ -1,15 +1,21 @@
 <?php
 
-/**
- * Contao module: Member Picture Feed Bundle
- * Copyright (c) 2008-2018 Marko Cupic
- * @package member-picture-feed-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2018
+declare(strict_types=1);
+
+/*
+ * This file is part of Member Picture Feed.
+ *
+ * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * @license GPL-3.0-or-later
+ * For the full copyright and license information,
+ * please view the LICENSE file that was distributed with this source code.
  * @link https://github.com/markocupic/member-picture-feed
  */
 
-namespace Markocupic\MemberPictureFeedBundle\Controller;
+namespace Markocupic\MemberPictureFeed\Controller;
 
+use Contao\CoreBundle\Exception\ResponseException;
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Dbafs;
 use Contao\Environment;
 use Contao\File;
@@ -18,235 +24,218 @@ use Contao\Frontend;
 use Contao\FrontendUser;
 use Contao\Input;
 use Contao\PageModel;
-use Markocupic\MemberPictureFeedBundle\Contao\Classes\MemberPictureFeed;
+use Markocupic\MemberPictureFeed\Contao\Classes\MemberPictureFeed;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * Class AjaxController
- * @package Markocupic\MemberPictureFeedBundle\Controller
+ * Class AjaxController.
  */
 class AjaxController extends AbstractController
 {
+    private ContaoFramework $framework;
+
+    public function __construct(ContaoFramework $framework)
+    {
+        $this->framework = $framework;
+    }
 
     /**
      * Handles ajax requests.
+     *
      * @Route("/_member_picture_feed_xhr/remove_image", name="member_picture_feed_xhr_remove_image", defaults={"_scope" = "frontend", "_token_check" = true})
      */
-    public function removeImageAction()
+    public function removeImageAction(): void
     {
-        $this->container->get('contao.framework')->initialize();
+        $this->framework->initialize(true);
 
         // Do allow only xhr requests
-        if (Environment::get('isAjaxRequest') === false)
-        {
+        if (false === Environment::get('isAjaxRequest')) {
             throw new NotFoundHttpException('The route "/_member_picture_feed_xhr" is allowed to xhr requests only.');
         }
 
         // Ajax request: action=removeImage
-        if (Input::post('fileId') != '')
-        {
+        if ('' !== Input::post('fileId')) {
             $blnSuccess = 'error';
-            if (null !== ($objUser = FrontendUser::getInstance()))
-            {
+
+            if (null !== ($objUser = FrontendUser::getInstance())) {
                 $objFile = FilesModel::findByPk(Input::post('fileId'));
-                if ($objFile !== null)
-                {
-                    if ($objFile->memberPictureFeedUserId === $objUser->id)
-                    {
+
+                if (null !== $objFile) {
+                    if ($objFile->memberPictureFeedUserId === $objUser->id) {
                         $oFile = new File($objFile->path);
-                        if (is_file(TL_ROOT . '/' . $objFile->path))
-                        {
+
+                        if (is_file(TL_ROOT.'/'.$objFile->path)) {
                             $res = $objFile->path;
                             $oFile->delete();
                             Dbafs::deleteResource($res);
-                            Dbafs::updateFolderHashes(dirname($res));
+                            Dbafs::updateFolderHashes(\dirname($res));
                             $blnSuccess = 'success';
                         }
                     }
                 }
-                $arrJson = array('status' => $blnSuccess);
+                $arrJson = ['status' => $blnSuccess];
             }
-            echo \GuzzleHttp\json_encode($arrJson);
-            exit();
+
+            throw new ResponseException(new JsonResponse($arrJson));
         }
 
-        echo \GuzzleHttp\json_encode(array('status' => 'error'));
-        exit();
+        throw new ResponseException(new JsonResponse(['status' => 'error']));
     }
 
     /**
      * Handles ajax requests.
+     *
      * @Route("/_member_picture_feed_xhr/rotate_image", name="member_picture_feed_xhr_rotate_image", defaults={"_scope" = "frontend", "_token_check" = true})
      */
-    public function rotateImageAction()
+    public function rotateImageAction(): void
     {
         $this->container->get('contao.framework')->initialize();
 
         // Do allow only xhr requests
-        if (Environment::get('isAjaxRequest') === false)
-        {
+        if (false === Environment::get('isAjaxRequest')) {
             throw new NotFoundHttpException('The route "/_member_picture_feed_xhr" is allowed to xhr requests only.');
         }
 
         // Ajax request: action=rotateImage
-        if (Input::post('fileId') != '')
-        {
+        if ('' !== Input::post('fileId')) {
             $blnSuccess = 'error';
-            if (null !== ($objUser = FrontendUser::getInstance()))
-            {
+
+            if (null !== ($objUser = FrontendUser::getInstance())) {
                 $objFile = FilesModel::findByPk(Input::post('fileId'));
-                if ($objFile !== null)
-                {
-                    if ($objFile->memberPictureFeedUserId === $objUser->id)
-                    {
+
+                if (null !== $objFile) {
+                    if ($objFile->memberPictureFeedUserId === $objUser->id) {
                         MemberPictureFeed::rotateImage($objFile->id);
                         $blnSuccess = 'success';
                     }
                 }
-                $arrJson = array('status' => $blnSuccess);
+                $arrJson = ['status' => $blnSuccess];
             }
-            echo \GuzzleHttp\json_encode($arrJson);
-            exit();
+
+            throw new ResponseException(new JsonResponse($arrJson));
         }
 
-        echo \GuzzleHttp\json_encode(array('status' => 'error'));
-        exit();
+        throw new ResponseException(new JsonResponse(['status' => 'error']));
     }
 
     /**
      * Handles ajax requests.
+     *
      * @Route("/_member_picture_feed_xhr/get_caption", name="member_picture_feed_xhr_get_caption", defaults={"_scope" = "frontend", "_token_check" = true})
      */
-    public function getCaptionAction()
+    public function getCaptionAction(): void
     {
         $this->container->get('contao.framework')->initialize();
 
         // Do allow only xhr requests
-        if (Environment::get('isAjaxRequest') === false)
-        {
+        if (false === Environment::get('isAjaxRequest')) {
             throw new NotFoundHttpException('The route "/_member_picture_feed_xhr" is allowed to xhr requests only.');
         }
 
         // Ajax request: action=getCaption
-        if (Input::post('pageLanguage') && Input::post('fileId') != '')
-        {
+        if (Input::post('pageLanguage') && '' !== Input::post('fileId')) {
             $pageLang = Input::post('pageLanguage');
-            if (null !== ($objUser = FrontendUser::getInstance()))
-            {
-                if ($pageLang != '')
-                {
+
+            if (null !== ($objUser = FrontendUser::getInstance())) {
+                if ('' !== $pageLang) {
                     $objFile = FilesModel::findByPk(Input::post('fileId'));
-                    if ($objFile !== null)
-                    {
-                        if ($objFile->memberPictureFeedUserId === $objUser->id)
-                        {
-                            if (null !== ($objPage = PageModel::findByPk(Input::post('pageId'))))
-                            {
+
+                    if (null !== $objFile) {
+                        if ($objFile->memberPictureFeedUserId === $objUser->id) {
+                            if (null !== ($objPage = PageModel::findByPk(Input::post('pageId')))) {
                                 // get meta data
                                 $arrMeta = Frontend::getMetaData($objFile->meta, $pageLang);
-                                if (empty($arrMeta) && $objPage->rootFallbackLanguage !== null)
-                                {
+
+                                if (empty($arrMeta) && null !== $objPage->rootFallbackLanguage) {
                                     $arrMeta = Frontend::getMetaData($objFile->meta, $pageLang);
                                 }
 
-                                if (!isset($arrMeta['caption']))
-                                {
+                                if (!isset($arrMeta['caption'])) {
                                     $caption = '';
-                                }
-                                else
-                                {
+                                } else {
                                     $caption = $arrMeta['caption'];
                                 }
 
-                                if (!isset($arrMeta['photographer']))
-                                {
-                                    $photographer = $objUser->firstname . ' ' . $objUser->lastname;
-                                }
-                                else
-                                {
+                                if (!isset($arrMeta['photographer'])) {
+                                    $photographer = $objUser->firstname.' '.$objUser->lastname;
+                                } else {
                                     $photographer = $arrMeta['photographer'];
-                                    if ($photographer === '')
-                                    {
-                                        $photographer = $objUser->firstname . ' ' . $objUser->lastname;
+
+                                    if ('' === $photographer) {
+                                        $photographer = $objUser->firstname.' '.$objUser->lastname;
                                     }
                                 }
-                                $response = array(
-                                    'status'       => 'success',
-                                    'caption'      => html_entity_decode($caption),
+                                $arrJson = [
+                                    'status' => 'success',
+                                    'caption' => html_entity_decode($caption),
                                     'photographer' => $photographer,
-                                );
-                                echo \GuzzleHttp\json_encode($response);
-                                exit();
+                                ];
+
+                                throw new ResponseException(new JsonResponse($arrJson));
                             }
                         }
                     }
                 }
             }
-            echo \GuzzleHttp\json_encode(array('status' => 'error'));
-            exit();
         }
 
-        echo \GuzzleHttp\json_encode(array('status' => 'error'));
-        exit();
+        throw new ResponseException(new JsonResponse(['status' => 'error']));
     }
 
     /**
      * Handles ajax requests.
+     *
      * @Route("/_member_picture_feed_xhr/set_caption", name="member_picture_feed_xhr_set_caption", defaults={"_scope" = "frontend", "_token_check" = true})
      */
-    public function setCaptionAction()
+    public function setCaptionAction(): void
     {
         $this->container->get('contao.framework')->initialize();
 
         // Do allow only xhr requests
-        if (Environment::get('isAjaxRequest') === false)
-        {
+        if (false === Environment::get('isAjaxRequest')) {
             throw new NotFoundHttpException('The route "/_member_picture_feed_xhr" is allowed to xhr requests only.');
         }
 
         // Ajax request: action=setCaption
-        if (Input::post('pageLanguage') && Input::post('fileId') != '')
-        {
+        if (Input::post('pageLanguage') && '' !== Input::post('fileId')) {
             $objUser = FrontendUser::getInstance();
-            if ($objUser === null)
-            {
-                echo \GuzzleHttp\json_encode(array('status' => 'error'));
-                exit;
+
+            if (null === $objUser) {
+                throw new ResponseException(new JsonResponse(['status' => 'error']));
             }
 
             $objFile = FilesModel::findByPk(Input::post('fileId'));
-            if ($objFile !== null)
-            {
-                if ($objFile->memberPictureFeedUserId === $objUser->id)
-                {
+
+            if (null !== $objFile) {
+                if ($objFile->memberPictureFeedUserId === $objUser->id) {
                     // get meta data
                     $pageLang = Input::post('pageLanguage');
-                    if ($pageLang != '')
-                    {
-                        if (!isset($arrMeta[$pageLang]))
-                        {
-                            $arrMeta[$pageLang] = array(
-                                'title'        => '',
-                                'alt'          => '',
-                                'link'         => '',
-                                'caption'      => '',
+
+                    if ('' !== $pageLang) {
+                        if (!isset($arrMeta[$pageLang])) {
+                            $arrMeta[$pageLang] = [
+                                'title' => '',
+                                'alt' => '',
+                                'link' => '',
+                                'caption' => '',
                                 'photographer' => '',
-                            );
+                            ];
                         }
                         $arrMeta[$pageLang]['caption'] = Input::post('caption');
-                        $arrMeta[$pageLang]['photographer'] = Input::post('photographer') ?: $objUser->firstname . ' ' . $objUser->lastname;
+                        $arrMeta[$pageLang]['photographer'] = Input::post('photographer') ?: $objUser->firstname.' '.$objUser->lastname;
 
                         $objFile->meta = serialize($arrMeta);
                         $objFile->save();
-                        echo \GuzzleHttp\json_encode(array('status' => 'success'));
-                        exit;
+
+                        throw new ResponseException(new JsonResponse(['status' => 'success']));
                     }
                 }
             }
         }
-        echo \GuzzleHttp\json_encode(array('status' => 'error'));
-        exit();
+
+        throw new ResponseException(new JsonResponse(['status' => 'error']));
     }
 }

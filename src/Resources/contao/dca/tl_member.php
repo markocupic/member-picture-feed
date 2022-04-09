@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of Member Picture Feed Bundle.
+ * This file is part of Member Picture Feed.
  *
  * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
@@ -12,6 +12,6 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/member-picture-feed
  */
 
-use Markocupic\MemberPictureFeedBundle\Contao\Classes\MemberPictureFeed;
+use Markocupic\MemberPictureFeed\Contao\Classes\MemberPictureFeed;
 
 $GLOBALS['TL_DCA']['tl_member']['config']['ondelete_callback'][] = [MemberPictureFeed::class, 'memberOndeleteCallback'];

@@ -12,10 +12,13 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/member-picture-feed
  */
 
-use Markocupic\MemberPictureFeed\Contao\Classes\MemberPictureFeed;
+namespace Markocupic\MemberPictureFeed;
 
-// Hooks
-$GLOBALS['TL_HOOKS']['closeAccount'][] = [MemberPictureFeed::class, 'closeAccountHook'];
+use Symfony\Component\HttpKernel\Bundle\Bundle;
 
-// CSS
-$GLOBALS['TL_CSS'][] = 'bundles/markocupicmemberpicturefeed/css/fineuploader.min.css|static';
+/**
+ * Configures the member picture bundle.
+ */
+class MarkocupicMemberPictureFeed extends Bundle
+{
+}

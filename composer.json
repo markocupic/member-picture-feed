@@ -28,7 +28,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Markocupic\\MemberPictureFeedBundle\\": "src/"
+      "Markocupic\\MemberPictureFeed\\": "src/"
     },
     "classmap": [
       "src/Resources/contao"
@@ -42,6 +42,6 @@
     ]
   },
   "extra": {
-    "contao-manager-plugin": "Markocupic\\MemberPictureFeedBundle\\ContaoManager\\Plugin"
+    "contao-manager-plugin": "Markocupic\\MemberPictureFeed\\ContaoManager\\Plugin"
   }
 }
