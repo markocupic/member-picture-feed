@@ -18,8 +18,8 @@ use Contao\CoreBundle\ContaoCoreBundle;
 use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
 use Contao\ManagerPlugin\Bundle\Parser\DelegatingParser;
 use Contao\TestCase\ContaoTestCase;
-use Markocupic\MemberPictureFeedBundle\MarkocupicMemberPictureFeedBundle;
-use Markocupic\MemberPictureFeedBundle\ContaoManager\Plugin;
+use Markocupic\MemberPictureFeed\ContaoManager\Plugin;
+use Markocupic\MemberPictureFeed\MarkocupicMemberPictureFeed;
 
 class PluginTest extends ContaoTestCase
 {
@@ -43,7 +43,7 @@ class PluginTest extends ContaoTestCase
 
         $this->assertCount(1, $bundles);
         $this->assertInstanceOf(BundleConfig::class, $bundles[0]);
-        $this->assertSame(MarkocupicMemberPictureFeedBundle::class, $bundles[0]->getName());
+        $this->assertSame(MarkocupicMemberPictureFeed::class, $bundles[0]->getName());
         $this->assertSame([ContaoCoreBundle::class], $bundles[0]->getLoadAfter());
     }
 }
