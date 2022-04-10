@@ -12,7 +12,7 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/member-picture-feed
  */
 
-namespace Markocupic\MemberPictureFeedBundle\Tests\ContaoManager;
+namespace Markocupic\MemberPictureFeed\Tests\ContaoManager;
 
 use Contao\CoreBundle\ContaoCoreBundle;
 use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
