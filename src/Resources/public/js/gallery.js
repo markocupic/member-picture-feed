@@ -173,8 +173,8 @@ class MemberPictureFeedUploadGallery {
 
                                     if (data.status === 'success') {
                                         bsModal.show();
-                                        document.getElementById('imageCaptionInput').setAttribute('value',data.caption);
-                                        document.getElementById('imagePhotographerInput').setAttribute('value',data.photographer);
+                                        document.getElementById('imageCaptionInput').setAttribute('value', data.caption);
+                                        document.getElementById('imagePhotographerInput').setAttribute('value', data.photographer);
                                     } else {
                                         console.error('Server error!!!')
                                     }

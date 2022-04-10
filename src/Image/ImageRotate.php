@@ -26,10 +26,6 @@ class ImageRotate
     }
 
     /**
-     * @param string $sourcePath
-     * @param int $angle
-     * @param string|null $targetPath
-     * @return bool
      * @throws \ImagickException
      * @throws \Exception
      */

@@ -12,15 +12,23 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/member-picture-feed
  */
 
-// Miscellaneous
-$GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReached'] = 'Du hast bereits das Upload Maximum erreicht. Um weitere Bilder hochzuladen, musst du zuerst mindestens ein Bild löschen.';
-$GLOBALS['TL_LANG']['MSC']['memberPictureUploadLimitReachedDuringUploadProcess'] = 'Das Upload-Limit wurde erreicht. Es konnten nicht alle Fotos hochgeladen werden.';
-$GLOBALS['TL_LANG']['MSC']['memberPictureFeedUploadBtnlLabel'] = 'Änderungen übernehmen';
-$GLOBALS['TL_LANG']['MSC']['memberPictureFeedFileuploadLabel'] = 'Bilddatei auswählen';
-$GLOBALS['TL_LANG']['MSC']['fileUploadedAndResized'] = 'Bilddatei %s wurde erfolgreich hochgeladen und auf die maximalen Abmessungen verkleinert.';
-
-// Fineuploader
-$GLOBALS['TL_LANG']['MSC']['memberPictureFeed_fineuploader_upload'] = 'Hier klicken oder Dateien zum Hochladen hierhin ziehen.';
+// File upload form
+$GLOBALS['TL_LANG']['MPFU']['memberPictureUploadLimitReached'] = 'Du hast bereits das Upload Maximum erreicht. Um weitere Bilder hochzuladen, musst du zuerst mindestens ein Bild löschen.';
+$GLOBALS['TL_LANG']['MPFU']['memberPictureUploadLimitReachedDuringUploadProcess'] = 'Das Upload-Limit wurde erreicht. Es konnten nicht alle Fotos hochgeladen werden.';
+$GLOBALS['TL_LANG']['MPFU']['save'] = 'Änderungen speichern';
+$GLOBALS['TL_LANG']['MPFU']['memberPictureFeedFileuploadLabel'] = 'Bilddatei auswählen';
+$GLOBALS['TL_LANG']['MPFU']['fileUploaded'] = 'Bilddatei %s wurde erfolgreich hochgeladen.';
+$GLOBALS['TL_LANG']['MPFU']['fileUploadedAndResized'] = 'Bilddatei %s wurde erfolgreich hochgeladen und auf die maximalen Abmessungen verkleinert.';
+$GLOBALS['TL_LANG']['MPFU']['invalidExtensionErr'] = 'Die Datei "%s" verfügt über eine unerlaubte Dateiendung und wurde deshalb nicht hochgeladen. Erlaubte Dateiendungen sind: %s.';
+$GLOBALS['TL_LANG']['MPFU']['deleteImage'] = 'Bild löschen';
+$GLOBALS['TL_LANG']['MPFU']['addCaption'] = 'Bildbeschreibung hinzufügen';
+$GLOBALS['TL_LANG']['MPFU']['rotateImage'] = 'Bild drehen';
+$GLOBALS['TL_LANG']['MPFU']['editCaptionAndPhotographer'] = 'Bildbeschreibung & Fotograf bearbeiten';
+$GLOBALS['TL_LANG']['MPFU']['close'] = 'schliessen';
+$GLOBALS['TL_LANG']['MPFU']['caption'] = 'Bildbeschreibung';
+$GLOBALS['TL_LANG']['MPFU']['addCaption'] = 'Bildbeschreibung hinzufügen';
+$GLOBALS['TL_LANG']['MPFU']['photographer'] = 'Fotograf';
+$GLOBALS['TL_LANG']['MPFU']['addPhotographer'] = 'Name Fotograf hinzufügen';
 
 // Override fineuploader language strings
-$GLOBALS['TL_LANG']['MPF']['fineuploader.upload'] = 'Bilder auswählen';
+$GLOBALS['TL_LANG']['MPFU']['fineuploader.upload'] = 'Bilder auswählen';

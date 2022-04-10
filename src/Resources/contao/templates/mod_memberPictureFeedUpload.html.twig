@@ -2,10 +2,8 @@
 
 {% block content %}
 
-    {% if hasMessages %}
-        {% for message in messages %}
-            <p class="tl_confirm alert alert-info">{{ message }}</p>
-        {% endfor %}
+    {% if messages %}
+        {{ messages|raw }}
     {% endif %}
 
     {% if form %}
@@ -24,9 +22,9 @@
                         {{ picture.data.memberPictureFeedUploadTimeFormatted }}
                     </div>
                     <div class="member-picture-feed-thumb-buttons-container d-flex">
-                        <button class="btn btn-danger remove-image" title="Bild löschen"><i class="fal fa-trash"></i></button>
-                        <button class="btn btn-danger add-caption" title="Bildunterschrift hinzufügen"><i class="fal fa-pencil"></i></button>
-                        <button class="btn btn-danger rotate-image" title="Bild 90° im GUZG drehen"><i class="fal fa-history"></i></button>
+                        <button class="btn btn-danger remove-image" title="{{ 'MPFU.deleteImage'|trans({}, 'contao_default') }}"><i class="fal fa-trash"></i></button>
+                        <button class="btn btn-danger add-caption" title="{{ 'MPFU.addCaption'|trans({}, 'contao_default') }}"><i class="fal fa-pencil"></i></button>
+                        <button class="btn btn-danger rotate-image" title="{{ 'MPFU.rotateImage'|trans({}, 'contao_default') }}"><i class="fal fa-history"></i></button>
                     </div>
                 </li>
             {% endfor %}
@@ -37,33 +35,33 @@
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="ModalImageCaption">Bildeschreibung</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
+                        <h5 class="modal-title" id="ModalImageCaption">{{ 'MPFU.editCaptionAndPhotographer'|trans({}, 'contao_default') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'MPFU.close'|trans({}, 'contao_default') }}"></button>
                     </div>
                     <div class="modal-body">
                         <figure>
-                            <img class="image-full-res" src=""/>
+                            <img class="w-100 image-full-res" src=""/>
                         </figure>
                         <br>
                         <div class="form-group">
-                            <label for="imageCaptionInput">Bildbeschreibung</label>
-                            <input class="form-control" id="imageCaptionInput" name="image-caption" type="text" maxlength="60" placeholder="">
+                            <label for="imageCaptionInput">{{ 'MPFU.caption'|trans({}, 'contao_default') }}</label>
+                            <input class="form-control" id="imageCaptionInput" name="image-caption" type="text" maxlength="60" placeholder="{{ 'MPFU.addCaption'|trans({}, 'contao_default') }}">
                         </div>
                         <br>
                         <div class="form-group">
-                            <label for="imagePhotographerInput">Photograph/Bildeigent&uuml;mer</label>
-                            <input class="form-control" id="imagePhotographerInput" name="image-photographer" type="text" placeholder="">
+                            <label for="imagePhotographerInput">{{ 'MPFU.photographer'|trans({}, 'contao_default') }}</label>
+                            <input class="form-control" id="imagePhotographerInput" name="image-photographer" type="text" placeholder="{{ 'MPFU.addPhotographer'|trans({}, 'contao_default') }}">
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" id="saveCaptionButton" class="btn btn-primary">Speichern</button>
+                        <button type="button" id="saveCaptionButton" class="btn btn-primary">{{ 'MPFU.save'|trans({}, 'contao_default') }}</button>
                     </div>
                 </div>
             </div>
         </div>
         <!-- end modal -->
 
-        <script src="bundles/markocupicmemberpicturefeed/js/gallery.js"></script>
+        <script src="bundles/markocupicmemberpicturefeed/js/gallery.min.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', () => {
                 const gallery = new MemberPictureFeedUploadGallery('{{ requestToken }}','{{ page.id }}','{{ page.language }}');

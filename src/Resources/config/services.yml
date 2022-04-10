@@ -5,8 +5,9 @@ services:
         public: true
         bind:
             $projectDir: '%kernel.project_dir%'
-            $kernel: '@kernel'
             $csrfTokenName: '%contao.csrf_token_name%'
+            $validExtensions: '%markocupic_member_picture_feed.valid_extensions%'
+            $kernel: '@kernel'
             $contaoImageFactory: '@contao.image.factory'
 
     Markocupic\MemberPictureFeed\:

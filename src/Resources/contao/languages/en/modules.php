@@ -12,5 +12,5 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/member-picture-feed
  */
 
-$GLOBALS['TL_LANG']['FMD']['member_picture_feed'] = 'Mitglieder Bilder Feed';
-$GLOBALS['TL_LANG']['FMD']['memberPictureFeedUpload'] = ['Mitglieder Bilder Feed Upload', 'Dem Layout ein Mitglieder-Bilder-Feed Upload Modul hiinzufügen.'];
+$GLOBALS['TL_LANG']['FMD']['member_picture_feed'] = 'Member photo feed';
+$GLOBALS['TL_LANG']['FMD']['memberPictureFeedUpload'] = ['Member photo feed upload module', 'Add a member photo feed upload module to your layout.'];
