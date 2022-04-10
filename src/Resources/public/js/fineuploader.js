@@ -8,6 +8,8 @@
  * @link https://github.com/markocupic/member-picture-feed
  */
 
+"use strict";
+
 // Open file explorer when clicking the mouse inside the fineuploader container.
 document.addEventListener("DOMContentLoaded", function (event) {
     let boxes = document.querySelectorAll('.mod_memberPictureFeedUpload .fineuploader-container');

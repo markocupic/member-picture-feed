@@ -45,7 +45,7 @@
                         <br>
                         <div class="form-group">
                             <label for="imageCaptionInput">{{ 'MPFU.caption'|trans({}, 'contao_default') }}</label>
-                            <input class="form-control" id="imageCaptionInput" name="image-caption" type="text" maxlength="60" placeholder="{{ 'MPFU.addCaption'|trans({}, 'contao_default') }}">
+                            <input class="form-control" id="imageCaptionInput" name="image-caption" type="text" placeholder="{{ 'MPFU.addCaption'|trans({}, 'contao_default') }}">
                         </div>
                         <br>
                         <div class="form-group">
@@ -64,7 +64,7 @@
         <script src="bundles/markocupicmemberpicturefeed/js/gallery.min.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', () => {
-                const gallery = new MemberPictureFeedUploadGallery('{{ requestToken }}','{{ page.id }}','{{ page.language }}');
+                const gallery = new MemberPictureFeedUploadApp('{{ requestToken }}','{{ page.id }}','{{ page.language }}');
                 gallery.initialize();
             });
         </script>
