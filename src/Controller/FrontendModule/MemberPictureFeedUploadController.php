@@ -212,7 +212,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
      */
     protected function countUserImages(): int
     {
-        return $this->connection->fetchOne('SELECT COUNT(id) AS numRows FROM tl_files WHERE isMemberPictureFeed = ? AND memberPictureFeedUserId = ?', ['1', $this->user->id]);
+        return (int) $this->connection->fetchOne('SELECT COUNT(id) AS numRows FROM tl_files WHERE isMemberPictureFeed = ? AND memberPictureFeedUserId = ?', ['2', $this->user->id]);
     }
 
     /**
