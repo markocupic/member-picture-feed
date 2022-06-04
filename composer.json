@@ -1,6 +1,6 @@
 {
   "name": "markocupic/member-picture-feed",
-  "description": "Contao module, add a member picture feed module to your Contao project.",
+  "description": "Plugin for Contao CMS. Add a member picture feed backend module to your Contao project.",
   "keywords": [
     "contao",
     "member-picture-feed",
@@ -19,7 +19,7 @@
   ],
   "support": {
     "issues": "https://github.com/markocupic/member-picture-feed/issues",
-    "source": "https://github.com/markocupic/member-picture-feed"
+    "source": "https://github.com/markocupic/member-picture-feed" 
   },
   "require": {
     "php": "^7.4|^8.0",
