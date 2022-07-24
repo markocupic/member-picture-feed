@@ -35,6 +35,7 @@ class MarkocupicMemberPictureFeedExtension extends Extension
         );
 
         $loader->load('services.yml');
+        $loader->load('twig.yml');
 
         $rootKey = $this->getAlias();
 

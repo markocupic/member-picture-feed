@@ -69,7 +69,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
     private string $csrfTokenName;
     private string $projectDir;
     private string $validExtensions;
-    private ?LoggerInterface $logger;
+    private LoggerInterface|null $logger;
 
     // Adapters
     private Adapter $config;
@@ -83,8 +83,8 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
     private Adapter $stringUtil;
     private Adapter $validator;
 
-    private ?PageModel $page;
-    private ?FrontendUser $user;
+    private PageModel|null $page;
+    private FrontendUser|null $user;
 
     public function __construct(ContaoFramework $framework, Connection $connection, Security $security, InsertTagParser $insertTagParser, Studio $studio, ImageFactory $contaoImageFactory, EnvironmentTwig $twig, ContaoCsrfTokenManager $contaoCsrfTokenManager, string $csrfTokenName, string $projectDir, string $validExtensions, LoggerInterface $logger = null)
     {

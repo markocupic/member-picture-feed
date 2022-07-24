@@ -1,0 +1,8 @@
+services:
+
+    # Twig extensions
+    Markocupic\MemberPictureFeed\Twig\TwigTemplateManager:
+        arguments:
+            - '@contao.framework'
+        tags:
+            - { name: twig.extension }

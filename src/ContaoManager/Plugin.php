@@ -40,7 +40,7 @@ class Plugin implements BundlePluginInterface, RoutingPluginInterface
     /**
      * @throws \Exception
      */
-    public function getRouteCollection(LoaderResolverInterface $resolver, KernelInterface $kernel): ?RouteCollection
+    public function getRouteCollection(LoaderResolverInterface $resolver, KernelInterface $kernel): RouteCollection|null
     {
         $file = __DIR__.'/../Resources/config/routing.yml';
 
