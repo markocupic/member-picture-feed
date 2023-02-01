@@ -1,46 +1,46 @@
 {
-  "name": "markocupic/member-picture-feed",
-  "description": "Plugin for Contao CMS. Add a member picture feed backend module to your Contao project.",
-  "keywords": [
-    "contao",
-    "member-picture-feed",
-    "picture",
-    "feed"
-  ],
-  "type": "contao-bundle",
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "Marko Cupic",
-      "email": "m.cupic@gmx.ch",
-      "homepage": "https://github.com/markocupic",
-      "role": "Developer"
+    "name": "markocupic/member-picture-feed",
+    "description": "Plugin for Contao CMS. Add a member picture feed backend module to your Contao project.",
+    "keywords": [
+        "contao",
+        "member-picture-feed",
+        "picture",
+        "feed"
+    ],
+    "type": "contao-bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Marko Cupic",
+            "email": "m.cupic@gmx.ch",
+            "homepage": "https://github.com/markocupic",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/markocupic/member-picture-feed/issues",
+        "source": "https://github.com/markocupic/member-picture-feed"
+    },
+    "require": {
+        "php": "^8.1",
+        "contao/core-bundle": "^4.13",
+        "codefog/contao-haste": "^4.0",
+        "terminal42/contao-fineuploader": "^3.2.0"
+    },
+    "require-dev": {
+        "contao/easy-coding-standard": "^5.0",
+        "contao/manager-bundle": "^4.13",
+        "contao/manager-plugin": "^2.3.1",
+        "contao/test-case": "^4.6",
+        "phpunit/phpunit": "^9.3",
+        "symfony/phpunit-bridge": "^5.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Markocupic\\MemberPictureFeed\\": "src/"
+        }
+    },
+    "extra": {
+        "contao-manager-plugin": "Markocupic\\MemberPictureFeed\\ContaoManager\\Plugin"
     }
-  ],
-  "support": {
-    "issues": "https://github.com/markocupic/member-picture-feed/issues",
-    "source": "https://github.com/markocupic/member-picture-feed"
-  },
-  "require": {
-    "php": "^8.1",
-    "contao/core-bundle": "^4.13",
-    "codefog/contao-haste": "^4.0",
-    "terminal42/contao-fineuploader": "^3.2.0"
-  },
-  "require-dev": {
-    "contao/easy-coding-standard": "^5.0",
-    "contao/manager-bundle": "^4.13",
-    "contao/manager-plugin": "^2.3.1",
-    "contao/test-case": "^4.6",
-    "phpunit/phpunit": "^9.3",
-    "symfony/phpunit-bridge": "^5.4"
-  },
-  "autoload": {
-    "psr-4": {
-      "Markocupic\\MemberPictureFeed\\": "src/"
-    }
-  },
-  "extra": {
-    "contao-manager-plugin": "Markocupic\\MemberPictureFeed\\ContaoManager\\Plugin"
-  }
 }

@@ -11,9 +11,8 @@ services:
             $contaoImageFactory: '@contao.image.factory'
 
     Markocupic\MemberPictureFeed\:
-        resource: ../../
-        exclude: ../../{Model,DependencyInjection,Resources}
-
+        resource: ../src/
+        exclude: ../src/{Model,DependencyInjection}
 
     Markocupic\MemberPictureFeed\Controller\AjaxController:
         calls:

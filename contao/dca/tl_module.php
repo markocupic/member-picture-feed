@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Member Picture Feed.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -19,7 +19,6 @@ $GLOBALS['TL_DCA']['tl_module']['palettes'][MemberPictureFeedUploadController::T
 
 // Fields
 $GLOBALS['TL_DCA']['tl_module']['fields']['memberPictureFeedUploadFolder'] = [
-    'label'     => &$GLOBALS['TL_LANG']['tl_module']['memberPictureFeedUploadFolder'],
     'exclude'   => true,
     'inputType' => 'fileTree',
     'eval'      => ['fieldType' => 'radio', 'filesOnly' => false, 'mandatory' => true, 'tl_class' => 'clr'],
@@ -27,7 +26,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['memberPictureFeedUploadFolder'] = [
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['memberPictureFeedUploadPictureLimit'] = [
-    'label'     => &$GLOBALS['TL_LANG']['tl_module']['memberPictureFeedUploadPictureLimit'],
     'exclude'   => true,
     'default'   => 3,
     'inputType' => 'text',

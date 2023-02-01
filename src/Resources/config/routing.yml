@@ -1,3 +1,0 @@
-member_picture_feed:
-  resource: "@MarkocupicMemberPictureFeed/Controller"
-  type: annotation

@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Member Picture Feed.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -18,14 +18,13 @@ use Contao\Config;
 use Contao\Controller;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\File\Metadata;
 use Contao\CoreBundle\Framework\Adapter;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Image\ImageFactory;
 use Contao\CoreBundle\Image\Studio\Studio;
-use Contao\CoreBundle\InsertTag\InsertTagParser;
 use Contao\CoreBundle\Monolog\ContaoContext;
-use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 use Contao\Date;
 use Contao\Dbafs;
 use Contao\File;
@@ -49,27 +48,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Security;
 use Twig\Environment as EnvironmentTwig;
 
-/**
- * @FrontendModule(MemberPictureFeedUploadController::TYPE, category="member_picture_feed")
- */
+#[AsFrontendModule(MemberPictureFeedUploadController::TYPE, category:'member_picture_feed', template:'mod_memberPictureFeedUpload')]
 class MemberPictureFeedUploadController extends AbstractFrontendModuleController
 {
     public const TYPE = 'memberPictureFeedUpload';
 
     private const FLASH_MESSAGE_KEY = 'mod_member_picture_feed_upload';
-
-    private ContaoFramework $framework;
-    private Connection $connection;
-    private Security $security;
-    private InsertTagParser $insertTagParser;
-    private Studio $studio;
-    private ImageFactory $contaoImageFactory;
-    private EnvironmentTwig $twig;
-    private ContaoCsrfTokenManager $contaoCsrfTokenManager;
-    private string $csrfTokenName;
-    private string $projectDir;
-    private string $validExtensions;
-    private LoggerInterface|null $logger;
 
     // Adapters
     private Adapter $config;
@@ -86,21 +70,19 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
     private PageModel|null $page;
     private FrontendUser|null $user;
 
-    public function __construct(ContaoFramework $framework, Connection $connection, Security $security, InsertTagParser $insertTagParser, Studio $studio, ImageFactory $contaoImageFactory, EnvironmentTwig $twig, ContaoCsrfTokenManager $contaoCsrfTokenManager, string $csrfTokenName, string $projectDir, string $validExtensions, LoggerInterface $logger = null)
-    {
-        $this->framework = $framework;
-        $this->connection = $connection;
-        $this->security = $security;
-        $this->insertTagParser = $insertTagParser;
-        $this->studio = $studio;
-        $this->contaoImageFactory = $contaoImageFactory;
-        $this->twig = $twig;
-        $this->contaoCsrfTokenManager = $contaoCsrfTokenManager;
-        $this->csrfTokenName = $csrfTokenName;
-        $this->projectDir = $projectDir;
-        $this->validExtensions = $validExtensions;
-        $this->logger = $logger;
-
+    public function __construct(
+        private readonly ContaoFramework $framework,
+        private readonly Connection $connection,
+        private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
+        private readonly EnvironmentTwig $twig,
+        private readonly ImageFactory $contaoImageFactory,
+        private readonly Security $security,
+        private readonly Studio $studio,
+        private readonly string $csrfTokenName,
+        private readonly string $projectDir,
+        private readonly string $validExtensions,
+        private readonly LoggerInterface|null $logger,
+    ) {
         // Load adapters
         $this->config = $this->framework->getAdapter(Config::class);
         $this->controller = $this->framework->getAdapter(Controller::class);
@@ -274,70 +256,71 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
         if ($request->request->get('FORM_SUBMIT') === $objForm->getFormId()) {
             // validate() also checks whether the form has been submitted
             if ($objForm->validate()) {
-                if (!empty($_SESSION['FILES']) && \is_array($_SESSION['FILES'])) {
-                    $index = 0;
+                if ($request->request->has('fileupload')) {
+                    $arrFiles = explode(',', $request->request->get('fileupload'));
 
-                    foreach ($_SESSION['FILES'] as $file) {
-                        ++$index;
-                        $blnAllow = true;
+                    if (!empty($arrFiles)) {
+                        $index = 0;
 
-                        $uuid = $file['uuid'];
+                        foreach ($arrFiles as $file) {
+                            $blnAllow = true;
 
-                        if ($this->validator->isStringUuid($uuid)) {
-                            $binUuid = $this->stringUtil->uuidToBin($uuid);
-                            $filesModel = $this->filesModel->findByUuid($binUuid);
+                            $objFile = new File($objUploadFolder->path.'/'.basename($file));
 
-                            if (null !== $filesModel) {
-                                // Check if upload limit has been reached
-                                if ($this->countUserImages() >= $model->memberPictureFeedUploadPictureLimit && $model->memberPictureFeedUploadPictureLimit > 0) {
-                                    // Do not store uploads if upload limit has been reached.
-                                    $blnAllow = false;
-                                    $this->message->addError($GLOBALS['TL_LANG']['MPFU']['memberPictureUploadLimitReachedDuringUploadProcess']);
-                                } elseif (!\in_array($filesModel->extension, $arrValidExtensions, true)) {
-                                    // Do not store files with an invalid/not allowed extension
-                                    $blnAllow = false;
-                                    $this->message->addError(sprintf($GLOBALS['TL_LANG']['MPFU']['invalidExtensionErr'], $filesModel->name, $strValidExtensions));
-                                } else {
-                                    $uploadTime = time() + $index;
-
-                                    $file = new File($filesModel->path);
-
-                                    // Rename file
-                                    $newFilename = sprintf('%s-%s.%s', $uploadTime, $this->user->id, $file->extension);
-                                    $newPath = \dirname($filesModel->path).'/'.$newFilename;
-                                    $this->files->getInstance()->rename($file->path, $newPath);
-
-                                    $this->dbafs->addResource($newPath);
-                                    $this->dbafs->deleteResource($filesModel->path);
-                                    $this->dbafs->updateFolderHashes($objUploadFolder->path);
-
-                                    $filesModel = $this->filesModel->findByPath($newPath);
-                                    $filesModel->isMemberPictureFeed = true;
-                                    $filesModel->memberPictureFeedUserId = $this->user->id;
-                                    $filesModel->memberPictureFeedUploadTime = $uploadTime;
-                                    $filesModel->tstamp = $uploadTime;
-
-                                    $filesModel->save();
-
-                                    // Try to resize the image
-                                    if ($this->resizeUploadedImage($filesModel->path)) {
-                                        $this->message->addInfo(sprintf($GLOBALS['TL_LANG']['MPFU']['fileUploadedAndResized'], $file->name));
+                            if ($objFile->isImage) {
+                                if (null !== ($filesModel = $objFile->getModel())) {
+                                    ++$index;
+                                    // Check if upload limit has been reached
+                                    if ($this->countUserImages() >= $model->memberPictureFeedUploadPictureLimit && $model->memberPictureFeedUploadPictureLimit > 0) {
+                                        // Do not store uploads if upload limit has been reached.
+                                        $blnAllow = false;
+                                        $this->message->addError($GLOBALS['TL_LANG']['MPFU']['memberPictureUploadLimitReachedDuringUploadProcess']);
+                                    } elseif (!\in_array($filesModel->extension, $arrValidExtensions, true)) {
+                                        // Do not store files with an invalid/not allowed extension
+                                        $blnAllow = false;
+                                        $this->message->addError(sprintf($GLOBALS['TL_LANG']['MPFU']['invalidExtensionErr'], $filesModel->name, $strValidExtensions));
                                     } else {
-                                        $this->message->addInfo(sprintf($GLOBALS['TL_LANG']['MPFU']['fileUploaded'], $file->name));
+                                        $uploadTime = time() + $index;
+
+                                        $file = new File($filesModel->path);
+
+                                        // Rename file
+                                        $newFilename = sprintf('%s-%s.%s', $uploadTime, $this->user->id, $file->extension);
+                                        $newPath = \dirname($filesModel->path).'/'.$newFilename;
+                                        $this->files->getInstance()->rename($file->path, $newPath);
+
+                                        $this->dbafs->addResource($newPath);
+                                        $this->dbafs->deleteResource($filesModel->path);
+                                        $this->dbafs->updateFolderHashes($objUploadFolder->path);
+
+                                        $filesModel = $this->filesModel->findByPath($newPath);
+                                        $filesModel->isMemberPictureFeed = true;
+                                        $filesModel->memberPictureFeedUserId = $this->user->id;
+                                        $filesModel->memberPictureFeedUploadTime = $uploadTime;
+                                        $filesModel->tstamp = $uploadTime;
+
+                                        $filesModel->save();
+
+                                        // Try to resize the image
+                                        if ($this->resizeUploadedImage($filesModel->path)) {
+                                            $this->message->addInfo(sprintf($GLOBALS['TL_LANG']['MPFU']['fileUploadedAndResized'], $file->name));
+                                        } else {
+                                            $this->message->addInfo(sprintf($GLOBALS['TL_LANG']['MPFU']['fileUploaded'], $file->name));
+                                        }
+
+                                        // Log
+                                        if (null !== $this->logger) {
+                                            $strText = sprintf('User with username %s has uploadad a new picture ("%s") for the member-picture-feed.', $this->user->username, $filesModel->path);
+                                            $this->logger->info($strText, ['contao' => new ContaoContext(__METHOD__, 'MEMBER PICTURE FEED')]);
+                                        }
                                     }
 
-                                    // Log
-                                    if (null !== $this->logger) {
-                                        $strText = sprintf('User with username %s has uploadad a new picture ("%s") for the member-picture-feed.', $this->user->username, $filesModel->path);
-                                        $this->logger->info($strText, ['contao' => new ContaoContext(__METHOD__, 'MEMBER PICTURE FEED')]);
+                                    if (!$blnAllow) {
+                                        $file = new File($filesModel->path);
+                                        $this->dbafs->deleteResource($filesModel->path);
+                                        $file->delete();
+                                        $this->dbafs->updateFolderHashes($objUploadFolder->path);
                                     }
-                                }
-
-                                if (!$blnAllow) {
-                                    $file = new File($filesModel->path);
-                                    $this->dbafs->deleteResource($filesModel->path);
-                                    $file->delete();
-                                    $this->dbafs->updateFolderHashes($objUploadFolder->path);
                                 }
                             }
                         }
@@ -350,8 +333,6 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
                 }
             }
         }
-
-        unset($_SESSION['FILES']);
 
         return $objForm->generate();
     }

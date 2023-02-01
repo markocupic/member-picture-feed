@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Member Picture Feed.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -34,28 +34,20 @@ use Symfony\Component\Security\Core\Security;
 
 class AjaxController extends AbstractController
 {
-    private ContaoFramework $framework;
-    private RequestStack $requestStack;
-    private Security $security;
-    private ImageRotate $imageRotate;
-    private ContaoKernel $kernel;
-    private string $projectDir;
-
     // Adapters
     private Adapter $dbafs;
     private Adapter $filesModel;
     private Adapter $frontend;
     private Adapter $pageModel;
 
-    public function __construct(ContaoFramework $framework, RequestStack $requestStack, Security $security, ImageRotate $imageRotate, ContaoKernel $kernel, string $projectDir)
-    {
-        $this->framework = $framework;
-        $this->requestStack = $requestStack;
-        $this->security = $security;
-        $this->imageRotate = $imageRotate;
-        $this->kernel = $kernel;
-        $this->projectDir = $projectDir;
-
+    public function __construct(
+        private readonly ContaoFramework $framework,
+        private readonly ContaoKernel $kernel,
+        private readonly ImageRotate $imageRotate,
+        private readonly RequestStack $requestStack,
+        private readonly Security $security,
+        private readonly string $projectDir,
+    ) {
         // Adapters
         $this->dbafs = $this->framework->getAdapter(Dbafs::class);
         $this->filesModel = $this->framework->getAdapter(FilesModel::class);
@@ -66,10 +58,9 @@ class AjaxController extends AbstractController
     /**
      * Delete image.
      *
-     * @Route("/_member_picture_feed_xhr/remove_image", name="member_picture_feed_xhr_remove_image", defaults={"_scope" = "frontend", "_token_check" = true})
-     *
      * @throws \Exception
      */
+    #[Route('/_member_picture_feed_xhr/remove_image', name: 'member_picture_feed_xhr_remove_image', defaults: ['_scope' => 'frontend', '_token_check' => true])]
     public function removeImageAction(): JsonResponse
     {
         $this->framework->initialize(true);
@@ -123,11 +114,10 @@ class AjaxController extends AbstractController
     /**
      * Rotate image.
      *
-     * @Route("/_member_picture_feed_xhr/rotate_image", name="member_picture_feed_xhr_rotate_image", defaults={"_scope" = "frontend", "_token_check" = true})
-     *
      * @throws \ImagickException
      * @throws \Exception
      */
+    #[Route('/_member_picture_feed_xhr/rotate_image', name: 'member_picture_feed_xhr_rotate_image', defaults: ['_scope' => 'frontend', '_token_check' => true])]
     public function rotateImageAction(): JsonResponse
     {
         $this->framework->initialize();
@@ -175,11 +165,10 @@ class AjaxController extends AbstractController
 
     /**
      * Send caption.
-     *
-     * @Route("/_member_picture_feed_xhr/get_image_data", name="member_picture_feed_xhr_get_caption", defaults={"_scope" = "frontend", "_token_check" = true})
-     *
+     **
      * @throws \Exception
      */
+    #[Route('/_member_picture_feed_xhr/get_image_data', name: 'member_picture_feed_xhr_get_caption', defaults: ['_scope' => 'frontend', '_token_check' => true])]
     public function getCaptionAction(): Response
     {
         $this->framework->initialize();
@@ -253,10 +242,9 @@ class AjaxController extends AbstractController
     /**
      * Set caption.
      *
-     * @Route("/_member_picture_feed_xhr/set_caption", name="member_picture_feed_xhr_set_caption", defaults={"_scope" = "frontend", "_token_check" = true})
-     *
      * @throws \Exception
      */
+    #[Route('/_member_picture_feed_xhr/set_caption', name: 'member_picture_feed_xhr_set_caption', defaults: ['_scope' => 'frontend', '_token_check' => true])]
     public function setCaptionAction(): JsonResponse
     {
         $this->framework->initialize();
