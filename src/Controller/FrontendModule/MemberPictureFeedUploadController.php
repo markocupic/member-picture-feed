@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\MemberPictureFeed\Controller\FrontendModule;
 
+use Codefog\HasteBundle\Form\Form;
 use Contao\Config;
 use Contao\Controller;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
@@ -41,7 +42,6 @@ use Contao\Template;
 use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
-use Haste\Form\Form;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -218,9 +218,12 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
             throw new \Exception('Image upload directory not set or not found. Please check your module configuration.');
         }
 
-        $objForm = new Form('form-member-picture-feed-upload', 'POST', static fn ($objHaste) => $request->request->get('FORM_SUBMIT') === $objHaste->getFormId());
+        $objForm = new Form(
+            'form-member-picture-feed-upload',
+            'POST',
+        );
 
-        $objForm->setFormActionFromUri($request->getUri());
+        $objForm->setAction($request->getUri());
 
         // Add some fields
         $objForm->addFormField('fileupload', [
