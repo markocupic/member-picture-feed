@@ -78,7 +78,6 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
         private readonly ImageFactory $contaoImageFactory,
         private readonly Security $security,
         private readonly Studio $studio,
-        private readonly string $csrfTokenName,
         private readonly string $projectDir,
         private readonly string $validExtensions,
         private readonly LoggerInterface|null $logger,
@@ -143,7 +142,14 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
 
             $arrSize = $this->stringUtil->deserialize($model->imgSize, true);
 
+            // Meta tags
             $arrMeta = $this->frontend->getMetaData($oFile->meta, $this->page->language);
+
+            foreach ($arrMeta as $k => $v)
+            {
+                // Output encoding
+                $arrMeta[$k] = StringUtil::specialcharsAttribute($v);
+            }
 
             if (empty($arrMeta) && null !== $this->page->rootFallbackLanguage) {
                 $arrMeta = $this->frontend->getMetaData($oFile->meta, $this->page->rootFallbackLanguage);
@@ -170,7 +176,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
 
         $template->pictures = $arrPictures;
 
-        $template->requestToken = $this->contaoCsrfTokenManager->getToken($this->csrfTokenName)->getValue();
+        $template->requestToken = $this->contaoCsrfTokenManager->getDefaultTokenValue();
 
         $template->page = $this->page->row();
 
