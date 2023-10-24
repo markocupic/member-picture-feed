@@ -17,7 +17,6 @@ class MemberPictureFeedUploadApp {
         this.pageLanguage = pageLanguage;
     }
 
-
     initialize() {
         const REQUEST_TOKEN = this.requestToken;
         const PAGE_ID = this.pageId;
@@ -26,11 +25,11 @@ class MemberPictureFeedUploadApp {
         let CURRENT_FILE_ID;
 
         // Remove image
-        ['click', 'touchmove'].forEach(function (e) {
+        for (const evt of ['click', 'touchmove']) {
             const buttons = document.querySelectorAll('.remove-image');
             if (buttons) {
-                buttons.forEach((button) => {
-                    button.addEventListener(e, function (event) {
+                for (const button of buttons) {
+                    button.addEventListener(evt, function (event) {
 
                         event.preventDefault();
                         const image = button.closest('[data-file-id]');
@@ -52,41 +51,40 @@ class MemberPictureFeedUploadApp {
                                     },
                                     body: formData,
                                 })
-                                .then((response) => response.json())
-                                .then((data) => {
-                                    if (data.message) {
-                                        if (data.status === 'success') {
-                                            console.log(data.message);
-                                        } else {
-                                            console.error(data.message);
+                                    .then((response) => response.json())
+                                    .then((data) => {
+                                        if (data.message) {
+                                            if (data.status === 'success') {
+                                                //console.log(data.message);
+                                            } else {
+                                                console.error(data.message);
+                                            }
                                         }
-                                    }
 
-                                    if (data.status === 'success') {
-                                        image.remove();
-                                        location.reload();
-                                    } else {
-                                        console.error('Server error!!!')
-                                    }
-                                })
-                                .catch((error) => {
-                                    console.error('Error:', error);
-                                });
+                                        if (data.status === 'success') {
+                                            image.remove();
+                                            location.reload();
+                                        } else {
+                                            console.error('Server error!!!')
+                                        }
+                                    })
+                                    .catch((error) => {
+                                        console.error('Error:', error);
+                                    });
                             }
                         }
                     });
-                });
+                }
             }
-        });
+        }
 
 
         // Rotate image
-        ['click', 'touchmove'].forEach(function (e) {
+        for (const evt of ['click', 'touchmove']) {
             const buttons = document.querySelectorAll('.rotate-image');
             if (buttons) {
-                buttons.forEach((button) => {
-                    button.addEventListener(e, function (event) {
-
+                for (const button of buttons) {
+                    button.addEventListener(evt, function (event) {
                         event.preventDefault();
                         const image = button.closest('[data-file-id]');
 
@@ -107,41 +105,40 @@ class MemberPictureFeedUploadApp {
                                     },
                                     body: formData,
                                 })
-                                .then((response) => response.json())
-                                .then((data) => {
+                                    .then((response) => response.json())
+                                    .then((data) => {
 
-                                    if (data.message) {
-                                        if (data.status === 'success') {
-                                            console.log(data.message);
-                                        } else {
-                                            console.error(data.message);
+                                        if (data.message) {
+                                            if (data.status === 'success') {
+                                                //console.log(data.message);
+                                            } else {
+                                                console.error(data.message);
+                                            }
                                         }
-                                    }
 
-                                    if (data.status === 'success') {
-                                        location.reload();
-                                    } else {
-                                        console.error('Server error!!!')
+                                        if (data.status === 'success') {
+                                            location.reload();
+                                        } else {
+                                            console.error('Server error!!!')
 
-                                    }
-                                })
-                                .catch((error) => {
-                                    console.error('Error:', error);
-                                });
+                                        }
+                                    })
+                                    .catch((error) => {
+                                        console.error('Error:', error);
+                                    });
                             }
                         }
                     });
-                });
+                }
             }
-
-        });
+        }
 
 
         // Open modal to edit caption and photographer name
         const editCaptionButtons = document.querySelectorAll('button.add-caption');
 
         if (editCaptionButtons) {
-            editCaptionButtons.forEach((button) => {
+            for (const button of editCaptionButtons) {
                 button.addEventListener('click', (event) => {
                     event.preventDefault();
                     const image = button.closest('[data-file-id]');
@@ -151,15 +148,12 @@ class MemberPictureFeedUploadApp {
                         if (CURRENT_FILE_ID) {
                             const elModal = ELEMENT_CAPTION_MODAL;
                             const bsModal = bootstrap.Modal.getOrCreateInstance(ELEMENT_CAPTION_MODAL);
-
-
                             elModal.querySelector('.image-full-res').setAttribute('src', filePath);
 
                             const formData = new FormData();
                             formData.append('REQUEST_TOKEN', REQUEST_TOKEN);
                             formData.append('pageLanguage', PAGE_LANGUAGE);
                             formData.append('pageId', PAGE_ID);
-
                             formData.append('fileId', CURRENT_FILE_ID);
 
                             fetch('_member_picture_feed_xhr/get_image_data', {
@@ -170,31 +164,31 @@ class MemberPictureFeedUploadApp {
                                 },
                                 body: formData,
                             })
-                            .then((response) => response.json())
-                            .then((data) => {
-                                if (data.message) {
-                                    if (data.status === 'success') {
-                                        console.log(data.message);
-                                    } else {
-                                        console.error(data.message);
+                                .then((response) => response.json())
+                                .then((data) => {
+                                    if (data.message) {
+                                        if (data.status === 'success') {
+                                            //console.log(data.message);
+                                        } else {
+                                            console.error(data.message);
+                                        }
                                     }
-                                }
 
-                                if (data.status === 'success') {
-                                    bsModal.show();
-                                    document.getElementById('imageCaptionInput').setAttribute('value', data.caption);
-                                    document.getElementById('imagePhotographerInput').setAttribute('value', data.photographer);
-                                } else {
-                                    console.error('Server error!!!')
-                                }
-                            })
-                            .catch((error) => {
-                                console.error('Error:', error);
-                            });
+                                    if (data.status === 'success') {
+                                        document.getElementById('imageCaptionInput').value = data.caption;
+                                        document.getElementById('imagePhotographerInput').value = data.photographer;
+                                        bsModal.show();
+                                    } else {
+                                        console.error('Server error!!!')
+                                    }
+                                })
+                                .catch((error) => {
+                                    console.error('Error:', error);
+                                });
                         }
                     }
                 });
-            });
+            }
 
         }
 
@@ -222,24 +216,22 @@ class MemberPictureFeedUploadApp {
                 },
                 body: formData,
             })
-            .then((response) => response.json())
-            //Then with the data from the response in JSON...
-            .then((data) => {
-                if (data.message) {
-                    if (data.status === 'success') {
-                        console.log(data.message);
-                    } else {
-                        console.error(data.message);
+                .then((response) => response.json())
+                //Then with the data from the response in JSON...
+                .then((data) => {
+                    if (data.message) {
+                        if (data.status === 'success') {
+                            //console.log(data.message);
+                        } else {
+                            console.error(data.message);
+                        }
                     }
-                }
-            })
-            //Then with the error genereted...
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+                })
+                //Then with the error generated...
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
         });
 
     }
 }
-
-
