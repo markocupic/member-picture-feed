@@ -22,9 +22,9 @@
                         {{ picture.data.memberPictureFeedUploadTimeFormatted }}
                     </div>
                     <div class="member-picture-feed-thumb-buttons-container d-flex">
-                        <button class="btn btn-danger remove-image" title="{{ 'MPFU.deleteImage'|trans({}, 'contao_default') }}"><i class="fal fa-trash"></i></button>
-                        <button class="btn btn-danger add-caption" title="{{ 'MPFU.addCaption'|trans({}, 'contao_default') }}"><i class="fal fa-pencil"></i></button>
-                        <button class="btn btn-danger rotate-image" title="{{ 'MPFU.rotateImage'|trans({}, 'contao_default') }}"><i class="fal fa-history"></i></button>
+                        <button class="btn btn-danger remove-image" title="{{ 'MPFU.deleteImage'|trans({}, 'contao_default') }}"><i class="fa-regular fa-trash"></i></button>
+                        <button class="btn btn-danger add-caption" title="{{ 'MPFU.addCaption'|trans({}, 'contao_default') }}"><i class="fa-regular fa-pencil"></i></button>
+                        <button class="btn btn-danger rotate-image" title="{{ 'MPFU.rotateImage'|trans({}, 'contao_default') }}"><i class="fa-regular fa-rotate-right"></i></button>
                     </div>
                 </li>
             {% endfor %}
@@ -45,12 +45,12 @@
                         <br>
                         <div class="form-group">
                             <label for="imageCaptionInput">{{ 'MPFU.caption'|trans({}, 'contao_default') }}</label>
-                            <input class="form-control" id="imageCaptionInput" name="image-caption" type="text" placeholder="{{ 'MPFU.addCaption'|trans({}, 'contao_default') }}">
+                            <input class="form-control" id="imageCaptionInput" name="image-caption" type="text" maxlength="50" placeholder="{{ 'MPFU.addCaption'|trans({}, 'contao_default') }}">
                         </div>
                         <br>
                         <div class="form-group">
                             <label for="imagePhotographerInput">{{ 'MPFU.photographer'|trans({}, 'contao_default') }}</label>
-                            <input class="form-control" id="imagePhotographerInput" name="image-photographer" type="text" placeholder="{{ 'MPFU.addPhotographer'|trans({}, 'contao_default') }}">
+                            <input class="form-control" id="imagePhotographerInput" name="image-photographer" type="text" maxlength="30" placeholder="{{ 'MPFU.addPhotographer'|trans({}, 'contao_default') }}">
                         </div>
                     </div>
                     <div class="modal-footer">
