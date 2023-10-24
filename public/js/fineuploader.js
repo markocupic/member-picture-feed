@@ -11,23 +11,22 @@
 "use strict";
 
 // Open file explorer when clicking the mouse inside the fineuploader container.
-document.addEventListener("DOMContentLoaded", function (event) {
-    let boxes = document.querySelectorAll('.mod_memberPictureFeedUpload .fineuploader-container');
+document.addEventListener("DOMContentLoaded", () => {
+    const boxes = document.querySelectorAll('.mod_memberPictureFeedUpload .fineuploader-container');
 
     if (boxes) {
-        boxes.forEach(function (box, index) {
+        for (const box of boxes) {
             box.addEventListener("click", (event) => {
                 event.stopPropagation();
-                let container = event.target;
-                let parent = container.parentNode;
+                const container = event.target;
+                const parent = container.parentNode;
                 if (parent) {
-                    let btn = parent.querySelector('input[type="file"][name="fileupload_fineuploader"]');
+                    const btn = parent.querySelector('input[type="file"][name="fileupload_fineuploader"]');
                     if (btn) {
                         btn.click();
                     }
                 }
             });
-        });
+        }
     }
 });
-
