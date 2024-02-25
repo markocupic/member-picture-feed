@@ -23,7 +23,7 @@
     },
     "require": {
         "php": "^8.1",
-        "contao/core-bundle": "^4.13",
+        "contao/core-bundle": "^4.13 || ^5.3",
         "codefog/contao-haste": "^5.0",
         "terminal42/contao-fineuploader": "^3.2.0"
     },
