@@ -17,6 +17,7 @@ namespace Markocupic\MemberPictureFeed\Twig;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\FilesModel;
 use Contao\MemberModel;
+use Contao\StringUtil;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
@@ -31,7 +32,9 @@ class TwigTemplateManager extends AbstractExtension
     {
         return [
             new TwigFunction('mpf_getFilesModelFromPath', [$this, 'getFilesModelFromPath']),
+            new TwigFunction('mpf_getFilesModelFromUuid', [$this, 'getFilesModelFromUuid']),
             new TwigFunction('mpf_getOwnerFromPath', [$this, 'getOwnerFromPath']),
+            new TwigFunction('mpf_getOwnerFromUuid', [$this, 'getOwnerFromUuid']),
         ];
     }
 
@@ -42,9 +45,36 @@ class TwigTemplateManager extends AbstractExtension
         return $filesModelAdapter->findByPath($path);
     }
 
+    public function getFilesModelFromUuid(string $uuid): FilesModel|null
+    {
+        $stringUtil = $this->framework->getAdapter(StringUtil::class);
+        $filesModelAdapter = $this->framework->getAdapter(FilesModel::class);
+
+        $uuid = $stringUtil->uuidToBin($uuid);
+
+        return $filesModelAdapter->findByUuid($uuid);
+    }
+
     public function getOwnerFromPath(string $path): MemberModel|null
     {
         if (null === ($objFiles = $this->getFilesModelFromPath($path))) {
+            return null;
+        }
+
+        if (isset($objFiles->memberPictureFeedUserId)) {
+            $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
+
+            if (null !== ($user = $memberModelAdapter->findByPk($objFiles->memberPictureFeedUserId))) {
+                return $user;
+            }
+        }
+
+        return null;
+    }
+
+    public function getOwnerFromUuid(string $uuid): MemberModel|null
+    {
+        if (null === ($objFiles = $this->getFilesModelFromUuid($uuid))) {
             return null;
         }
 
