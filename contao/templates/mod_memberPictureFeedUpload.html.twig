@@ -23,8 +23,8 @@
                     </div>
                     <div class="member-picture-feed-thumb-buttons-container d-flex">
                         <button class="btn btn-danger remove-image" title="{{ 'MPFU.deleteImage'|trans({}, 'contao_default') }}"><i class="fa-regular fa-trash"></i></button>
-                        <button class="btn btn-danger add-caption" title="{{ 'MPFU.addCaption'|trans({}, 'contao_default') }}"><i class="fa-regular fa-pencil"></i></button>
                         <button class="btn btn-danger rotate-image" title="{{ 'MPFU.rotateImage'|trans({}, 'contao_default') }}"><i class="fa-regular fa-rotate-right"></i></button>
+                        <button class="btn btn-danger add-caption" data-hascaption="{{ picture.data.hasCaption }}" title="{{ 'MPFU.addCaption'|trans({}, 'contao_default') }}"><i class="fa-regular fa-pencil"></i></button>
                     </div>
                 </li>
             {% endfor %}
@@ -60,8 +60,7 @@
             </div>
         </div>
         <!-- end modal -->
-
-        <script src="bundles/markocupicmemberpicturefeed/js/gallery.min.js"></script>
+        {% do addJavascriptResource('bundles/markocupicmemberpicturefeed/js/gallery.min.js|static') %}
         <script>
             document.addEventListener('DOMContentLoaded', () => {
                 const gallery = new MemberPictureFeedUploadApp('{{ requestToken }}', '{{ page.id }}', '{{ page.language }}');

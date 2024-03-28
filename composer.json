@@ -22,10 +22,11 @@
         "source": "https://github.com/markocupic/member-picture-feed"
     },
     "require": {
-        "php": "^8.1",
-        "contao/core-bundle": "^4.13 || ^5.3",
+        "php": "^8.2",
+        "contao/core-bundle": "^5.3",
         "codefog/contao-haste": "^5.0",
-        "terminal42/contao-fineuploader": "^3.2.0"
+        "terminal42/contao-fineuploader": "^3.2.0",
+        "markocupic/contao-twig-assets": "^1.1"
     },
     "require-dev": {
         "contao/easy-coding-standard": "^5.0",

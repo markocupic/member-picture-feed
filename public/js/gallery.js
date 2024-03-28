@@ -1,7 +1,7 @@
 /*
  * This file is part of Member Picture Feed.
  *
- * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2024 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -51,26 +51,26 @@ class MemberPictureFeedUploadApp {
                                     },
                                     body: formData,
                                 })
-                                    .then((response) => response.json())
-                                    .then((data) => {
-                                        if (data.message) {
-                                            if (data.status === 'success') {
-                                                //console.log(data.message);
-                                            } else {
-                                                console.error(data.message);
-                                            }
-                                        }
-
+                                .then((response) => response.json())
+                                .then((data) => {
+                                    if (data.message) {
                                         if (data.status === 'success') {
-                                            image.remove();
-                                            location.reload();
+                                            //console.log(data.message);
                                         } else {
-                                            console.error('Server error!!!')
+                                            console.error(data.message);
                                         }
-                                    })
-                                    .catch((error) => {
-                                        console.error('Error:', error);
-                                    });
+                                    }
+
+                                    if (data.status === 'success') {
+                                        image.remove();
+                                        location.reload();
+                                    } else {
+                                        console.error('Server error!!!')
+                                    }
+                                })
+                                .catch((error) => {
+                                    console.error('Error:', error);
+                                });
                             }
                         }
                     });
@@ -105,27 +105,27 @@ class MemberPictureFeedUploadApp {
                                     },
                                     body: formData,
                                 })
-                                    .then((response) => response.json())
-                                    .then((data) => {
+                                .then((response) => response.json())
+                                .then((data) => {
 
-                                        if (data.message) {
-                                            if (data.status === 'success') {
-                                                //console.log(data.message);
-                                            } else {
-                                                console.error(data.message);
-                                            }
-                                        }
-
+                                    if (data.message) {
                                         if (data.status === 'success') {
-                                            location.reload();
+                                            //console.log(data.message);
                                         } else {
-                                            console.error('Server error!!!')
-
+                                            console.error(data.message);
                                         }
-                                    })
-                                    .catch((error) => {
-                                        console.error('Error:', error);
-                                    });
+                                    }
+
+                                    if (data.status === 'success') {
+                                        location.reload();
+                                    } else {
+                                        console.error('Server error!!!')
+
+                                    }
+                                })
+                                .catch((error) => {
+                                    console.error('Error:', error);
+                                });
                             }
                         }
                     });
@@ -164,27 +164,27 @@ class MemberPictureFeedUploadApp {
                                 },
                                 body: formData,
                             })
-                                .then((response) => response.json())
-                                .then((data) => {
-                                    if (data.message) {
-                                        if (data.status === 'success') {
-                                            //console.log(data.message);
-                                        } else {
-                                            console.error(data.message);
-                                        }
-                                    }
-
+                            .then((response) => response.json())
+                            .then((data) => {
+                                if (data.message) {
                                     if (data.status === 'success') {
-                                        document.getElementById('imageCaptionInput').value = data.caption;
-                                        document.getElementById('imagePhotographerInput').value = data.photographer;
-                                        bsModal.show();
+                                        //console.log(data.message);
                                     } else {
-                                        console.error('Server error!!!')
+                                        console.error(data.message);
                                     }
-                                })
-                                .catch((error) => {
-                                    console.error('Error:', error);
-                                });
+                                }
+
+                                if (data.status === 'success') {
+                                    document.getElementById('imageCaptionInput').value = data.caption;
+                                    document.getElementById('imagePhotographerInput').value = data.photographer;
+                                    bsModal.show();
+                                } else {
+                                    console.error('Server error!!!')
+                                }
+                            })
+                            .catch((error) => {
+                                console.error('Error:', error);
+                            });
                         }
                     }
                 });
@@ -196,7 +196,7 @@ class MemberPictureFeedUploadApp {
         document.getElementById('saveCaptionButton').addEventListener('click', () => {
             const elModal = ELEMENT_CAPTION_MODAL;
             const bsModal = bootstrap.Modal.getOrCreateInstance(ELEMENT_CAPTION_MODAL)
-            const caption = elModal.querySelector('[name="image-caption"]').value;
+            const caption = (elModal.querySelector('[name="image-caption"]').value ?? '').trim();
             const photographer = elModal.querySelector('[name="image-photographer"]').value;
 
             bsModal.hide();
@@ -216,21 +216,30 @@ class MemberPictureFeedUploadApp {
                 },
                 body: formData,
             })
-                .then((response) => response.json())
-                //Then with the data from the response in JSON...
-                .then((data) => {
-                    if (data.message) {
-                        if (data.status === 'success') {
-                            //console.log(data.message);
-                        } else {
-                            console.error(data.message);
-                        }
+            .then((response) => response.json())
+            //Then with the data from the response in JSON...
+            .then((data) => {
+                if (data.message) {
+                    if (data.status === 'success') {
+                        //console.log(data.message);
+                    } else {
+                        console.error(data.message);
                     }
-                })
-                //Then with the error generated...
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
+                }
+            }).then(() => {
+                const btn = document.querySelector('li.member-picture-feed-thumb[data-file-id="' + CURRENT_FILE_ID + '"] button.add-caption');
+                if (btn) {
+                    if (caption !== '') {
+                        btn.dataset.hascaption = '1';
+                    } else {
+                        btn.dataset.hascaption = '';
+                    }
+                }
+            })
+            // Then with the error generated...
+            .catch((error) => {
+                console.error('Error:', error);
+            });
         });
 
     }
