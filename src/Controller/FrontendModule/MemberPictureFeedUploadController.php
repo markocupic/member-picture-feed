@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Member Picture Feed.
  *
- * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2024 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -32,23 +32,23 @@ use Contao\File;
 use Contao\Files;
 use Contao\FilesModel;
 use Contao\Folder;
+use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\Frontend;
 use Contao\FrontendUser;
 use Contao\Message;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\StringUtil;
-use Contao\Template;
 use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Bundle\SecurityBundle\Security;
 use Twig\Environment as EnvironmentTwig;
 
-#[AsFrontendModule(MemberPictureFeedUploadController::TYPE, category:'member_picture_feed', template:'mod_memberPictureFeedUpload')]
+#[AsFrontendModule(MemberPictureFeedUploadController::TYPE, category: 'member_picture_feed', template: 'mod_memberPictureFeedUpload')]
 class MemberPictureFeedUploadController extends AbstractFrontendModuleController
 {
     public const TYPE = 'memberPictureFeedUpload';
@@ -106,6 +106,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
         } else {
             return new Response('', Response::HTTP_NO_CONTENT);
         }
+
         // Call the parent method
         return parent::__invoke($request, $model, $section, $classes);
     }
@@ -113,23 +114,29 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
     /**
      * @throws \Exception
      */
-    public function getResponse(Template $template, ModuleModel $model, Request $request): Response
+    public function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
     {
         $GLOBALS['TL_JAVASCRIPT'][] = 'bundles/markocupicmemberpicturefeed/js/fineuploader.js|async';
 
         $this->overrideLangStrings();
 
         if ($this->countUserImages() < $model->memberPictureFeedUploadPictureLimit || $model->memberPictureFeedUploadPictureLimit < 1) {
-            $template->form = $this->generateUploadForm($model, $request);
+            $template->set('form', $this->generateUploadForm($model, $request));
         } else {
             $this->message->addInfo($GLOBALS['TL_LANG']['MPFU']['memberPictureUploadLimitReached']);
         }
 
-        $template->hasGallery = false;
+        $template->set('hasGallery', false);
 
         $arrPictures = [];
 
-        $stmt = $this->connection->executeQuery('SELECT * FROM tl_files WHERE isMemberPictureFeed = ? AND memberPictureFeedUserId = ? ORDER BY memberPictureFeedUploadTime DESC', ['1', $this->user->id]);
+        $stmt = $this->connection->executeQuery(
+            'SELECT * FROM tl_files WHERE isMemberPictureFeed = ? AND memberPictureFeedUserId = ? ORDER BY memberPictureFeedUploadTime DESC',
+            [
+                1,
+                $this->user->id,
+            ]
+        );
 
         while (false !== ($rowFile = $stmt->fetchAssociative())) {
             $arrPicture = [];
@@ -159,31 +166,31 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
                 ->fromUuid($rowFile['uuid'])
                 ->setSize($arrSize)
                 ->setMetadata(new Metadata($arrMeta))
-                ->buildIfResourceExists()
-                ;
+                ->buildIfResourceExists();
 
             if ($figure) {
-                $template->hasGallery = true;
+                $template->set('hasGallery', true);
 
                 $arrPicture['picture'] = $this->twig->render('@ContaoCore/Image/Studio/figure.html.twig', ['figure' => $figure]);
                 $arrPicture['data'] = $rowFile;
                 $arrPicture['data']['memberPictureFeedUploadTimeFormatted'] = $this->date->parse($this->config->get('dateFormat'), $rowFile['memberPictureFeedUploadTime']);
+                $arrPicture['data']['hasCaption'] = !empty($arrMeta['caption']);
 
                 $arrPictures[] = $arrPicture;
             }
         }
 
-        $template->pictures = $arrPictures;
+        $template->set('pictures', $arrPictures);
 
-        $template->requestToken = $this->contaoCsrfTokenManager->getDefaultTokenValue();
+        $template->set('requestToken', $this->contaoCsrfTokenManager->getDefaultTokenValue());
 
-        $template->page = $this->page->row();
+        $template->set('page', $this->page->row());
 
-        $template->messages = '';
+        $template->set('messages', '');
 
         // Get flash bag messages
         if ($this->message->hasMessages()) {
-            $template->messages = $this->message->generateUnwrapped();
+            $template->set('messages', $this->message->generateUnwrapped());
         }
 
         return $template->getResponse();
@@ -199,7 +206,13 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
      */
     protected function countUserImages(): int
     {
-        return (int) $this->connection->fetchOne('SELECT COUNT(id) AS numRows FROM tl_files WHERE isMemberPictureFeed = ? AND memberPictureFeedUserId = ?', [1, $this->user->id]);
+        return $this->connection->fetchOne(
+            'SELECT COUNT(id) AS numRows FROM tl_files WHERE isMemberPictureFeed = ? AND memberPictureFeedUserId = ?',
+            [
+                1,
+                $this->user->id,
+            ]
+        );
     }
 
     /**
@@ -232,29 +245,29 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
 
         // Add some fields
         $objForm->addFormField('fileupload', [
-            'label' => $GLOBALS['TL_LANG']['MPFU']['memberPictureFeedFileuploadLabel'],
+            'label'     => $GLOBALS['TL_LANG']['MPFU']['memberPictureFeedFileuploadLabel'],
             'inputType' => 'fineUploader',
-            'eval' => [
-                'extensions' => 'jpg,jpeg',
-                'multiple' => true,
-                'storeFile' => true,
-                'addToDbafs' => true,
-                'isGallery' => false,
+            'eval'      => [
+                'extensions'   => 'jpg,jpeg',
+                'multiple'     => true,
+                'storeFile'    => true,
+                'addToDbafs'   => true,
+                'isGallery'    => false,
                 'directUpload' => false,
-                'useHomeDir' => false,
+                'useHomeDir'   => false,
                 'uploadFolder' => $objUploadFolder->path,
-                'mandatory' => true,
+                'mandatory'    => true,
             ],
         ]);
 
         // Let's add  a submit button
         $objForm->addFormField('submit', [
-            'label' => $GLOBALS['TL_LANG']['MPFU']['save'],
+            'label'     => $GLOBALS['TL_LANG']['MPFU']['save'],
             'inputType' => 'submit',
         ]);
 
         $arrValidExtensions = $this->stringUtil->trimSplit(',', $this->validExtensions);
-        $strValidExtensions = implode(', ', array_map(static fn ($ext) => '.'.$ext, $arrValidExtensions));
+        $strValidExtensions = implode(', ', array_map(static fn($ext) => '.'.$ext, $arrValidExtensions));
 
         // Add attributes
         $objWidgetFileupload = $objForm->getWidget('fileupload');
@@ -371,7 +384,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
             // Log
             if (null !== $this->logger) {
                 $strText = 'File "'.$imgPath.'" is too big to be resized automatically';
-                $this->logger->info($strText, ['contao' => new ContaoContext(__METHOD__, TL_FILES)]);
+                $this->logger->info($strText, ['contao' => new ContaoContext(__METHOD__, ContaoContext::FILES)]);
             }
 
             // Set flash bag message
