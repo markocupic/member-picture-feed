@@ -61,7 +61,7 @@
         </div>
         <!-- end modal -->
         {% do addJavascriptResource('bundles/markocupicmemberpicturefeed/js/gallery.min.js|static') %}
-        <script>
+        <script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
             document.addEventListener('DOMContentLoaded', () => {
                 const gallery = new MemberPictureFeedUploadApp('{{ requestToken }}', '{{ page.id }}', '{{ page.language }}');
                 gallery.initialize();
