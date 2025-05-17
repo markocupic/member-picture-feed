@@ -16,7 +16,7 @@
         <br>
         <ul class="row tiny-gutter equal-height">
             {% for picture in pictures %}
-                <li class="member-picture-feed-thumb col-12 col-sm-6 col-md-3" data-file-id="{{ picture.data.id }}" data-src="{{ picture.data.path }}">
+                <li class="member-picture-feed-thumb col-12 col-sm-6 col-md-3 col-lg-3" data-file-id="{{ picture.data.id }}" data-src="{{ picture.data.path }}">
                     {{ picture.picture|raw }}
                     <div class="member-picture-feed-upload-time-overlay">
                         {{ picture.data.memberPictureFeedUploadTimeFormatted }}

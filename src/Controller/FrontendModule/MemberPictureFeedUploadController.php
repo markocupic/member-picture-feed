@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Member Picture Feed.
  *
- * (c) Marko Cupic 2024 <m.cupic@gmx.ch>
+ * Marko Cupic <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -26,13 +26,13 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Image\ImageFactory;
 use Contao\CoreBundle\Image\Studio\Studio;
 use Contao\CoreBundle\Monolog\ContaoContext;
+use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\Date;
 use Contao\Dbafs;
 use Contao\File;
 use Contao\Files;
 use Contao\FilesModel;
 use Contao\Folder;
-use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\Frontend;
 use Contao\FrontendUser;
 use Contao\Message;
@@ -43,9 +43,9 @@ use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Bundle\SecurityBundle\Security;
 use Twig\Environment as EnvironmentTwig;
 
 #[AsFrontendModule(MemberPictureFeedUploadController::TYPE, category: 'member_picture_feed', template: 'mod_memberPictureFeedUpload')]
@@ -95,7 +95,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
         $this->validator = $this->framework->getAdapter(Validator::class);
     }
 
-    public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
+    public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
     {
         $this->page = $page;
 
@@ -166,7 +166,8 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
                 ->fromUuid($rowFile['uuid'])
                 ->setSize($arrSize)
                 ->setMetadata(new Metadata($arrMeta))
-                ->buildIfResourceExists();
+                ->buildIfResourceExists()
+            ;
 
             if ($figure) {
                 $template->set('hasGallery', true);
@@ -245,29 +246,29 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
 
         // Add some fields
         $objForm->addFormField('fileupload', [
-            'label'     => $GLOBALS['TL_LANG']['MPFU']['memberPictureFeedFileuploadLabel'],
+            'label' => $GLOBALS['TL_LANG']['MPFU']['memberPictureFeedFileuploadLabel'],
             'inputType' => 'fineUploader',
-            'eval'      => [
-                'extensions'   => 'jpg,jpeg',
-                'multiple'     => true,
-                'storeFile'    => true,
-                'addToDbafs'   => true,
-                'isGallery'    => false,
+            'eval' => [
+                'extensions' => 'jpg,jpeg',
+                'multiple' => true,
+                'storeFile' => true,
+                'addToDbafs' => true,
+                'isGallery' => false,
                 'directUpload' => false,
-                'useHomeDir'   => false,
+                'useHomeDir' => false,
                 'uploadFolder' => $objUploadFolder->path,
-                'mandatory'    => true,
+                'mandatory' => true,
             ],
         ]);
 
         // Let's add  a submit button
         $objForm->addFormField('submit', [
-            'label'     => $GLOBALS['TL_LANG']['MPFU']['save'],
+            'label' => $GLOBALS['TL_LANG']['MPFU']['save'],
             'inputType' => 'submit',
         ]);
 
         $arrValidExtensions = $this->stringUtil->trimSplit(',', $this->validExtensions);
-        $strValidExtensions = implode(', ', array_map(static fn($ext) => '.'.$ext, $arrValidExtensions));
+        $strValidExtensions = implode(', ', array_map(static fn ($ext) => '.'.$ext, $arrValidExtensions));
 
         // Add attributes
         $objWidgetFileupload = $objForm->getWidget('fileupload');
