@@ -31,7 +31,7 @@ $GLOBALS['TL_DCA']['tl_files']['fields']['isMemberPictureFeed'] = [
     'filter'    => true,
     'inputType' => 'checkbox',
     'eval'      => ['submitOnChange' => true],
-    'sql'       => ['type' => 'boolean', 'default' => true],
+    'sql'       => ['type' => 'boolean', 'default' => false],
 ];
 
 $GLOBALS['TL_DCA']['tl_files']['fields']['memberPictureFeedUserId'] = [
