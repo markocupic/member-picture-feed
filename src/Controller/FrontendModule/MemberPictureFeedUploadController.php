@@ -43,9 +43,9 @@ use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Twig\Environment as EnvironmentTwig;
 
 #[AsFrontendModule(MemberPictureFeedUploadController::TYPE, category: 'member_picture_feed', template: 'mod_memberPictureFeedUpload')]
@@ -76,7 +76,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
         private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
         private readonly EnvironmentTwig $twig,
         private readonly ImageFactory $contaoImageFactory,
-        private readonly Security $security,
+        private readonly TokenStorageInterface $tokenStorage,
         private readonly Studio $studio,
         private readonly string $projectDir,
         private readonly string $validExtensions,
@@ -99,7 +99,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
     {
         $this->page = $page;
 
-        $user = $this->security->getUser();
+        $user = $this->tokenStorage->getToken()?->getUser();
 
         if ($user instanceof FrontendUser) {
             $this->user = $user;
