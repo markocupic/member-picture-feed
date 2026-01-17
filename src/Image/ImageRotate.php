@@ -52,7 +52,7 @@ class ImageRotate
         if (\function_exists('imagerotate')) {
             $source = imagecreatefromjpeg($sourcePath);
 
-            //rotate
+            // rotate
             $imgTmp = imagerotate($source, $angle, 0);
 
             // Output

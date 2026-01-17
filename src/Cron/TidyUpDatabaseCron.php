@@ -41,8 +41,8 @@ readonly class TidyUpDatabaseCron
         ');
 
         foreach ($rows as $row) {
-            $log = sprintf('Image "%s" is tagged with the "isMemberPictureFeed" flag but is not assigned to an existing frontend user.', $row['path']);
-            $this?->contaoErrorLogger->error($log);
+            $log = \sprintf('Image "%s" is tagged with the "isMemberPictureFeed" flag but is not assigned to an existing frontend user.', $row['path']);
+            $this->contaoErrorLogger->error($log);
             $set = ['isMemberPictureFeed' => 0];
             $this->connection->update('tl_files', $set, ['id' => $row['id']]);
         }

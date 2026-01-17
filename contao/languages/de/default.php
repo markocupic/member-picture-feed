@@ -29,6 +29,3 @@ $GLOBALS['TL_LANG']['MPFU']['caption'] = 'Bildbeschreibung';
 $GLOBALS['TL_LANG']['MPFU']['addCaption'] = 'Bildbeschreibung hinzufügen';
 $GLOBALS['TL_LANG']['MPFU']['photographer'] = 'Fotograf';
 $GLOBALS['TL_LANG']['MPFU']['addPhotographer'] = 'Name Fotograf hinzufügen';
-
-// Override fineuploader language strings
-$GLOBALS['TL_LANG']['MPFU']['fineuploader.upload'] = 'Bilder auswählen';

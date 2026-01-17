@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Member Picture Feed.
  *
- * (c) Marko Cupic 2025 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2026 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -36,8 +36,11 @@ class AjaxController extends AbstractController
 {
     // Adapters
     private Adapter $dbafs;
+
     private Adapter $filesModel;
+
     private Adapter $frontend;
+
     private Adapter $pageModel;
 
     public function __construct(
@@ -80,7 +83,7 @@ class AjaxController extends AbstractController
 
         // Ajax request: action=removeImage
         if ($request->request->has('fileId')) {
-            $objFile = $this->filesModel->findByPk($request->request->get('fileId'));
+            $objFile = $this->filesModel->findById($request->request->get('fileId'));
 
             if (null !== $objFile) {
                 if ($objFile->memberPictureFeedUserId === $objUser->id) {
@@ -137,7 +140,7 @@ class AjaxController extends AbstractController
         }
 
         if ($request->request->has('fileId')) {
-            $objFile = $this->filesModel->findByPk($request->request->get('fileId'));
+            $objFile = $this->filesModel->findById($request->request->get('fileId'));
 
             if (null !== $objFile) {
                 if ((int) $objFile->memberPictureFeedUserId === (int) $objUser->id) {
@@ -190,11 +193,11 @@ class AjaxController extends AbstractController
         if ($request->request->has('pageLanguage') && $request->request->has('fileId')) {
             $pageLang = $request->request->get('pageLanguage');
 
-            $objFile = $this->filesModel->findByPk($request->request->get('fileId'));
+            $objFile = $this->filesModel->findById($request->request->get('fileId'));
 
             if (null !== $objFile) {
                 if ($objFile->memberPictureFeedUserId === $objUser->id) {
-                    if (null !== ($objPage = $this->pageModel->findByPk($request->request->get('pageId')))) {
+                    if (null !== ($objPage = $this->pageModel->findById($request->request->get('pageId')))) {
                         // get meta data
                         $arrMeta = $this->frontend->getMetaData($objFile->meta, $pageLang);
 
@@ -264,7 +267,7 @@ class AjaxController extends AbstractController
         }
 
         if ($request->request->has('pageLanguage') && $request->request->has('fileId')) {
-            $objFile = $this->filesModel->findByPk($request->request->get('fileId'));
+            $objFile = $this->filesModel->findById($request->request->get('fileId'));
 
             if (null !== $objFile) {
                 if ($objFile->memberPictureFeedUserId === $objUser->id) {

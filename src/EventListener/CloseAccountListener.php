@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Member Picture Feed.
  *
- * (c) Marko Cupic 2025 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2026 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -23,7 +23,6 @@ use Doctrine\DBAL\Exception;
 use Markocupic\MemberPictureFeed\DataContainer\Member;
 
 #[AsHook('closeAccount')]
-
 class CloseAccountListener
 {
     // Adapters
@@ -42,7 +41,7 @@ class CloseAccountListener
      */
     public function __invoke(int $userId, string $mode, Module $module): void
     {
-        $member = $this->memberModel->findByPk($userId);
+        $member = $this->memberModel->findById($userId);
 
         if (null !== $member) {
             $this->member->deleteAllMemberPictures($member);

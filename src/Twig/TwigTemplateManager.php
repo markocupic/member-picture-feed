@@ -64,7 +64,7 @@ class TwigTemplateManager extends AbstractExtension
         if (isset($objFiles->memberPictureFeedUserId)) {
             $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
 
-            if (null !== ($user = $memberModelAdapter->findByPk($objFiles->memberPictureFeedUserId))) {
+            if (null !== ($user = $memberModelAdapter->findById($objFiles->memberPictureFeedUserId))) {
                 return $user;
             }
         }
@@ -81,7 +81,7 @@ class TwigTemplateManager extends AbstractExtension
         if (isset($objFiles->memberPictureFeedUserId)) {
             $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
 
-            if (null !== ($user = $memberModelAdapter->findByPk($objFiles->memberPictureFeedUserId))) {
+            if (null !== ($user = $memberModelAdapter->findById($objFiles->memberPictureFeedUserId))) {
                 return $user;
             }
         }
