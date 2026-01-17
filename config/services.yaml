@@ -7,7 +7,6 @@ services:
             $projectDir: '%kernel.project_dir%'
             $validExtensions: '%markocupic_member_picture_feed.valid_extensions%'
             $kernel: '@kernel'
-            $contaoImageFactory: '@contao.image.factory'
 
     Markocupic\MemberPictureFeed\:
         resource: ../src/

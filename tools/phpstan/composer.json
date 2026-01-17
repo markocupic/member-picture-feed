@@ -1,0 +1,18 @@
+{
+    "require": {
+        "contao/core-bundle": "^5.6",
+        "contao/manager-plugin": "^2.13",
+        "phpstan/phpstan": "^2.1",
+        "codefog/contao-haste": "^5.0",
+        "terminal42/notification_center": "^2.0",
+        "symfony/lock": "^6.4 || ^7.1",
+        "symfony/rate-limiter": "^6.4 || ^7.1"
+    },
+    "config": {
+        "allow-plugins": {
+            "contao-components/installer": true,
+            "php-http/discovery": true,
+            "contao/manager-plugin": true
+        }
+    }
+}
