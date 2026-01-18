@@ -8,10 +8,10 @@
  * @link https://github.com/markocupic/member-picture-feed
  */
 
-.mod_memberPictureFeedUpload figcaption {
+.module-memberPictureFeedUpload figcaption {
     display: none;
 }
 
-.mod_memberPictureFeedUpload .member-picture-feed-thumb img {
+.module-memberPictureFeedUpload .member-picture-feed-thumb img {
     width: 100%;
 }

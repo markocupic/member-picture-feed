@@ -1,19 +1,15 @@
-{% extends '@Contao/block_unsearchable' %}
-
+{% extends "@Contao/frontend_module/_base.html.twig" %}
 {% block content %}
-
-    {% if messages %}
+    {% add to head %}
+        <link rel="stylesheet" href="bundles/markocupicmemberpicturefeed/css/gallery.css">
+    {% endadd %}
+    {% if messages|default %}
         {{ messages|raw }}
     {% endif %}
-
-    {% if form %}
+    {% if form|default %}
         {{ form|raw }}
     {% endif %}
-
     {% if hasGallery %}
-        {% add to head %}
-            <link rel="stylesheet" href="bundles/markocupicmemberpicturefeed/css/gallery.css">
-        {% endadd %}
         <br>
         <hr>
         <br>
@@ -32,7 +28,6 @@
                 </li>
             {% endfor %}
         </ul>
-
         <!--modal -->
         <div class="modal fade member-picture-feed-caption-modal" tabindex="-1" role="dialog" aria-labelledby="ModalImageCaption" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -66,11 +61,9 @@
         {% do addJavascriptResource('bundles/markocupicmemberpicturefeed/js/gallery.min.js|static') %}
         <script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
             document.addEventListener('DOMContentLoaded', () => {
-                const gallery = new MemberPictureFeedUploadApp('{{ requestToken }}', '{{ page.id }}', '{{ page.language }}');
+                const gallery = new MemberPictureFeedUploadApp('{{ request_token }}', '{{ page.id }}', '{{ page.language }}');
                 gallery.initialize();
             });
         </script>
     {% endif %}
-
-
 {% endblock %}

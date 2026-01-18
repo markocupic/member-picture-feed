@@ -18,7 +18,7 @@ $GLOBALS['TL_LANG']['MPFU']['memberPictureUploadLimitReachedDuringUploadProcess'
 $GLOBALS['TL_LANG']['MPFU']['save'] = 'Änderungen speichern';
 $GLOBALS['TL_LANG']['MPFU']['memberPictureFeedFileuploadLabel'] = 'Bilddatei auswählen';
 $GLOBALS['TL_LANG']['MPFU']['fileUploaded'] = 'Bilddatei %s wurde erfolgreich hochgeladen.';
-$GLOBALS['TL_LANG']['MPFU']['fileUploadedAndResized'] = 'Bilddatei %s wurde erfolgreich hochgeladen und auf die maximalen Abmessungen verkleinert.';
+$GLOBALS['TL_LANG']['MPFU']['fileUploadedAndResized'] = 'Bilddatei %s wurde erfolgreich hochgeladen und auf die Abmessungen %d x %d px verkleinert.';
 $GLOBALS['TL_LANG']['MPFU']['invalidExtensionErr'] = 'Die Datei "%s" verfügt über eine unerlaubte Dateiendung und wurde deshalb nicht hochgeladen. Erlaubte Dateiendungen sind: %s.';
 $GLOBALS['TL_LANG']['MPFU']['deleteImage'] = 'Bild löschen';
 $GLOBALS['TL_LANG']['MPFU']['addCaption'] = 'Bildbeschreibung hinzufügen';

@@ -18,7 +18,7 @@ $GLOBALS['TL_LANG']['MPFU']['memberPictureUploadLimitReachedDuringUploadProcess'
 $GLOBALS['TL_LANG']['MPFU']['save'] = 'Save changes';
 $GLOBALS['TL_LANG']['MPFU']['memberPictureFeedFileuploadLabel'] = 'Select photos';
 $GLOBALS['TL_LANG']['MPFU']['fileUploaded'] = 'Image file %s has been successfully uploaded.';
-$GLOBALS['TL_LANG']['MPFU']['fileUploadedAndResized'] = 'Image file %s was successfully uploaded and scaled down to the maximum dimensions.';
+$GLOBALS['TL_LANG']['MPFU']['fileUploadedAndResized'] = 'Image file %s was successfully uploaded and scaled down to the %d x %d px.';
 $GLOBALS['TL_LANG']['MPFU']['invalidExtensionErr'] = 'The file "%s" has an illegal file extension and was therefore not uploaded. Allowed file extensions are: %s.';
 $GLOBALS['TL_LANG']['MPFU']['deleteImage'] = 'Delete photo';
 $GLOBALS['TL_LANG']['MPFU']['addCaption'] = 'Add a caption';
