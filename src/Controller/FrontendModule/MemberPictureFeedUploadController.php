@@ -52,6 +52,8 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
 {
     public const string TYPE = 'memberPictureFeedUpload';
 
+    public const string UPLOAD_WIDGET_NAME = 'fileupload';
+
     // Adapters
     private Adapter $config;
 
@@ -114,6 +116,13 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
     {
         if ($this->countUserImages() < $model->memberPictureFeedUploadPictureLimit || $model->memberPictureFeedUploadPictureLimit < 1) {
             $tempUploadPath = 'system/tmp/'.uniqid('mpfu_');
+
+            // Create the temp upload folder
+            if (!empty($_POST[self::UPLOAD_WIDGET_NAME]) && !$request->headers->has('fileponditemid')) {
+                $fs = new Filesystem();
+                $fs->mkdir($this->projectDir.'/'.$tempUploadPath);
+            }
+
             $form = $this->buildForm($request, $tempUploadPath);
 
             if ($form->validate()) {
@@ -230,7 +239,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
         $form->setAction($request->getUri());
 
         // Add the file upload field
-        $form->addFormField('fileupload', [
+        $form->addFormField(self::UPLOAD_WIDGET_NAME, [
             'label' => $GLOBALS['TL_LANG']['MPFU']['memberPictureFeedFileuploadLabel'],
             'inputType' => 'filepondUploader',
             'eval' => [
@@ -338,7 +347,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
         // Remove the temp folder
         $fs->remove(Path::join($this->projectDir, $tempUploadPath));
 
-        if (!$form->getWidget('fileupload')->hasErrors()) {
+        if (!$form->getWidget(self::UPLOAD_WIDGET_NAME)->hasErrors()) {
             // Reload the page
             $this->controller->reload();
         }
