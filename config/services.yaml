@@ -6,7 +6,6 @@ services:
         bind:
             $projectDir: '%kernel.project_dir%'
             $validExtensions: '%markocupic_member_picture_feed.valid_extensions%'
-            $kernel: '@kernel'
 
     Markocupic\MemberPictureFeed\:
         resource: ../src/

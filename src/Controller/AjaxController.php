@@ -21,15 +21,16 @@ use Contao\File;
 use Contao\FilesModel;
 use Contao\Frontend;
 use Contao\FrontendUser;
-use Contao\ManagerBundle\HttpKernel\ContaoKernel;
 use Contao\PageModel;
+use Contao\StringUtil;
 use Markocupic\MemberPictureFeed\Image\ImageRotate;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class AjaxController extends AbstractController
@@ -45,11 +46,12 @@ class AjaxController extends AbstractController
 
     public function __construct(
         private readonly ContaoFramework $framework,
-        private readonly ContaoKernel $kernel,
         private readonly ImageRotate $imageRotate,
         private readonly RequestStack $requestStack,
         private readonly TokenStorageInterface $tokenStorage,
         private readonly string $projectDir,
+        #[Autowire('%kernel.debug%')]
+        private readonly bool $debug = false,
     ) {
         // Adapters
         $this->dbafs = $this->framework->getAdapter(Dbafs::class);
@@ -86,7 +88,7 @@ class AjaxController extends AbstractController
             $objFile = $this->filesModel->findById($request->request->get('fileId'));
 
             if (null !== $objFile) {
-                if ($objFile->memberPictureFeedUserId === $objUser->id) {
+                if ((int) $objFile->memberPictureFeedUserId === (int) $objUser->id) {
                     $oFile = new File($objFile->path);
 
                     if (is_file($this->projectDir.'/'.$objFile->path)) {
@@ -97,7 +99,7 @@ class AjaxController extends AbstractController
 
                         $arrJson = [
                             'status' => 'success',
-                            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Successfully deleted image.' : null,
+                            'message' => $this->debug ? '[Member Picture Feed]: Successfully deleted image.' : null,
                         ];
 
                         return new JsonResponse($arrJson);
@@ -108,7 +110,7 @@ class AjaxController extends AbstractController
 
         $arrJson = [
             'status' => 'error',
-            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Removing image failed.' : null,
+            'message' => $this->debug ? '[Member Picture Feed]: Removing image failed.' : null,
         ];
 
         return new JsonResponse($arrJson);
@@ -149,7 +151,7 @@ class AjaxController extends AbstractController
                     if ($this->imageRotate->rotate($path)) {
                         $arrJson = [
                             'status' => 'success',
-                            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Successfully rotated image.' : null,
+                            'message' => $this->debug ? '[Member Picture Feed]: Successfully rotated image.' : null,
                         ];
 
                         return new JsonResponse($arrJson);
@@ -160,7 +162,7 @@ class AjaxController extends AbstractController
 
         $arrJson = [
             'status' => 'error',
-            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Rotate image failed.' : null,
+            'message' => $this->debug ? '[Member Picture Feed]: Rotate image failed.' : null,
         ];
 
         return new JsonResponse($arrJson);
@@ -196,13 +198,13 @@ class AjaxController extends AbstractController
             $objFile = $this->filesModel->findById($request->request->get('fileId'));
 
             if (null !== $objFile) {
-                if ($objFile->memberPictureFeedUserId === $objUser->id) {
+                if ((int) $objFile->memberPictureFeedUserId === (int) $objUser->id) {
                     if (null !== ($objPage = $this->pageModel->findById($request->request->get('pageId')))) {
                         // get meta data
                         $arrMeta = $this->frontend->getMetaData($objFile->meta, $pageLang);
 
                         if (empty($arrMeta) && null !== $objPage->rootFallbackLanguage) {
-                            $arrMeta = $this->frontend->getMetaData($objFile->meta, $pageLang);
+                            $arrMeta = $this->frontend->getMetaData($objFile->meta, $objPage->rootFallbackLanguage);
                         }
 
                         if (!isset($arrMeta['caption'])) {
@@ -225,7 +227,7 @@ class AjaxController extends AbstractController
                             'status' => 'success',
                             'caption' => html_entity_decode((string) $caption),
                             'photographer' => html_entity_decode((string) $photographer),
-                            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Get image data.' : null,
+                            'message' => $this->debug ? '[Member Picture Feed]: Get image data.' : null,
                         ];
 
                         return new JsonResponse($arrJson);
@@ -236,7 +238,7 @@ class AjaxController extends AbstractController
 
         $arrJson = [
             'status' => 'error',
-            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Get image data failed.' : null,
+            'message' => $this->debug ? '[Member Picture Feed]: Get image data failed.' : null,
         ];
 
         return new JsonResponse($arrJson);
@@ -270,12 +272,15 @@ class AjaxController extends AbstractController
             $objFile = $this->filesModel->findById($request->request->get('fileId'));
 
             if (null !== $objFile) {
-                if ($objFile->memberPictureFeedUserId === $objUser->id) {
+                if ((int) $objFile->memberPictureFeedUserId === (int) $objUser->id) {
                     // get meta data
                     $pageLang = $request->request->get('pageLanguage');
 
                     if ('' !== $pageLang) {
-                        if (!isset($arrMeta[$pageLang])) {
+                        // Keep the metadata of the other languages
+                        $arrMeta = StringUtil::deserialize($objFile->meta, true);
+
+                        if (!isset($arrMeta[$pageLang]) || !\is_array($arrMeta[$pageLang])) {
                             $arrMeta[$pageLang] = [
                                 'title' => '',
                                 'alt' => '',
@@ -284,14 +289,14 @@ class AjaxController extends AbstractController
                                 'photographer' => '',
                             ];
                         }
-                        $arrMeta[$pageLang]['caption'] = $request->request->get('caption');
-                        $arrMeta[$pageLang]['photographer'] = $request->request->get('photographer') ?: $objUser->firstname.' '.$objUser->lastname;
+                        $arrMeta[$pageLang]['caption'] = StringUtil::specialchars((string) $request->request->get('caption'));
+                        $arrMeta[$pageLang]['photographer'] = StringUtil::specialchars((string) ($request->request->get('photographer') ?: $objUser->firstname.' '.$objUser->lastname));
                         $objFile->meta = serialize($arrMeta);
                         $objFile->save();
 
                         $arrJson = [
                             'status' => 'success',
-                            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Successfully saved image caption and photographer name.' : null,
+                            'message' => $this->debug ? '[Member Picture Feed]: Successfully saved image caption and photographer name.' : null,
                         ];
 
                         return new JsonResponse($arrJson);
@@ -302,7 +307,7 @@ class AjaxController extends AbstractController
 
         $arrJson = [
             'status' => 'error',
-            'message' => $this->kernel->isDebug() ? '[Member Picture Feed]: Error while trying to save image caption and photographer name.' : null,
+            'message' => $this->debug ? '[Member Picture Feed]: Error while trying to save image caption and photographer name.' : null,
         ];
 
         return new JsonResponse($arrJson);

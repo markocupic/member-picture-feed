@@ -11,16 +11,30 @@
 "use strict";
 
 class MemberPictureFeedUploadApp {
-    constructor(requestToken, pageId, pageLanguage) {
+    /**
+     * @param {string} requestToken
+     * @param {string|number} pageId
+     * @param {string} pageLanguage
+     * @param {Object} routes Absolute route paths (removeImage, rotateImage, getImageData, setCaption).
+     *                        Required if the page layout has no <base> tag (e.g. Contao 6 page layouts).
+     */
+    constructor(requestToken, pageId, pageLanguage, routes = {}) {
         this.requestToken = requestToken;
         this.pageId = pageId;
         this.pageLanguage = pageLanguage;
+        this.routes = Object.assign({
+            removeImage: '_member_picture_feed_xhr/remove_image',
+            rotateImage: '_member_picture_feed_xhr/rotate_image',
+            getImageData: '_member_picture_feed_xhr/get_image_data',
+            setCaption: '_member_picture_feed_xhr/set_caption',
+        }, routes);
     }
 
     initialize() {
         const REQUEST_TOKEN = this.requestToken;
         const PAGE_ID = this.pageId;
         const PAGE_LANGUAGE = this.pageLanguage;
+        const ROUTES = this.routes;
         const ELEMENT_CAPTION_MODAL = document.querySelector('.modal.member-picture-feed-caption-modal');
         let CURRENT_FILE_ID;
 
@@ -43,7 +57,7 @@ class MemberPictureFeedUploadApp {
                                 formData.append('REQUEST_TOKEN', REQUEST_TOKEN);
                                 formData.append('fileId', CURRENT_FILE_ID);
 
-                                fetch('_member_picture_feed_xhr/remove_image', {
+                                fetch(ROUTES.removeImage, {
                                     method: 'POST',
                                     headers: {
                                         'x-requested-with': 'XMLHttpRequest',
@@ -97,7 +111,7 @@ class MemberPictureFeedUploadApp {
                                 formData.append('REQUEST_TOKEN', REQUEST_TOKEN);
                                 formData.append('fileId', CURRENT_FILE_ID);
 
-                                fetch('_member_picture_feed_xhr/rotate_image', {
+                                fetch(ROUTES.rotateImage, {
                                     method: 'POST',
                                     headers: {
                                         'x-requested-with': 'XMLHttpRequest',
@@ -156,7 +170,7 @@ class MemberPictureFeedUploadApp {
                             formData.append('pageId', PAGE_ID);
                             formData.append('fileId', CURRENT_FILE_ID);
 
-                            fetch('_member_picture_feed_xhr/get_image_data', {
+                            fetch(ROUTES.getImageData, {
                                 method: 'POST',
                                 headers: {
                                     'x-requested-with': 'XMLHttpRequest',
@@ -208,7 +222,7 @@ class MemberPictureFeedUploadApp {
             formData.append('photographer', photographer);
             formData.append('fileId', CURRENT_FILE_ID);
 
-            fetch('_member_picture_feed_xhr/set_caption', {
+            fetch(ROUTES.setCaption, {
                 method: 'POST',
                 headers: {
                     'x-requested-with': 'XMLHttpRequest',

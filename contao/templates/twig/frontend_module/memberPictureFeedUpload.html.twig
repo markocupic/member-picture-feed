@@ -1,7 +1,9 @@
 {% extends "@Contao/frontend_module/_base.html.twig" %}
+{% use "@Contao/component/_figure.html.twig" %}
+
 {% block content %}
-    {% add to head %}
-        <link rel="stylesheet" href="bundles/markocupicmemberpicturefeed/css/gallery.css">
+    {% add "member_picture_feed_css" to head %}
+        <link rel="stylesheet" href="{{ asset('css/gallery.css', 'markocupic_member_picture_feed') }}">
     {% endadd %}
     {% if messages|default %}
         {{ messages|raw }}
@@ -15,8 +17,8 @@
         <br>
         <ul class="row tiny-gutter equal-height">
             {% for picture in pictures %}
-                <li class="member-picture-feed-thumb col-12 col-sm-6 col-md-3 col-lg-3" data-file-id="{{ picture.data.id }}" data-src="{{ picture.data.path }}">
-                    {{ picture.picture|raw }}
+                <li class="member-picture-feed-thumb col-12 col-sm-6 col-md-3 col-lg-3" data-file-id="{{ picture.data.id }}" data-src="{{ prefix_url(picture.data.path) }}">
+                    {% with {figure: picture.figure} %}{{ block('figure_component') }}{% endwith %}
                     <div class="member-picture-feed-upload-time-overlay">
                         {{ picture.data.memberPictureFeedUploadTimeFormatted }}
                     </div>
@@ -58,12 +60,19 @@
             </div>
         </div>
         <!-- end modal -->
-        {% do addJavascriptResource('bundles/markocupicmemberpicturefeed/js/gallery.min.js|static') %}
-        <script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
-            document.addEventListener('DOMContentLoaded', () => {
-                const gallery = new MemberPictureFeedUploadApp('{{ request_token }}', '{{ page.id }}', '{{ page.language }}');
-                gallery.initialize();
-            });
-        </script>
+        {% add "member_picture_feed_js" to body %}
+            <script src="{{ asset('js/gallery.min.js', 'markocupic_member_picture_feed') }}"></script>
+            <script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const gallery = new MemberPictureFeedUploadApp('{{ contao.request_token }}', '{{ page.id }}', '{{ page.language }}', {{ {
+                        removeImage: path('member_picture_feed_xhr_remove_image'),
+                        rotateImage: path('member_picture_feed_xhr_rotate_image'),
+                        getImageData: path('member_picture_feed_xhr_get_caption'),
+                        setCaption: path('member_picture_feed_xhr_set_caption'),
+                    }|json_encode|raw }});
+                    gallery.initialize();
+                });
+            </script>
+        {% endadd %}
     {% endif %}
 {% endblock %}

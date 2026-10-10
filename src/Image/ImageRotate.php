@@ -18,9 +18,8 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 
 class ImageRotate
 {
-    public function __construct(
-        private readonly ContaoFramework $framework,
-    ) {
+    public function __construct(private readonly ContaoFramework $framework)
+    {
     }
 
     /**

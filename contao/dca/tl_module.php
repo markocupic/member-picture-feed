@@ -15,7 +15,7 @@ declare(strict_types=1);
 use Markocupic\MemberPictureFeed\Controller\FrontendModule\MemberPictureFeedUploadController;
 
 // Palette
-$GLOBALS['TL_DCA']['tl_module']['palettes'][MemberPictureFeedUploadController::TYPE] = '{title_legend},name,headline,type;{member_picture_feed_settings},memberPictureFeedUploadFolder,imgSize,memberPictureFeedUploadPictureLimit;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
+$GLOBALS['TL_DCA']['tl_module']['palettes'][MemberPictureFeedUploadController::TYPE] = '{title_legend},name,headline,type;{member_picture_feed_settings},memberPictureFeedUploadFolder,imgSize,memberPictureFeedUploadPictureLimit;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},cssID';
 
 // Fields
 $GLOBALS['TL_DCA']['tl_module']['fields']['memberPictureFeedUploadFolder'] = [

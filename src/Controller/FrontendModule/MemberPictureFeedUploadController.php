@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Member Picture Feed.
  *
- * Marko Cupic <m.cupic@gmx.ch>
+ * (c) Marko Cupic <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -45,7 +45,6 @@ use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
-use Twig\Environment as EnvironmentTwig;
 
 #[AsFrontendModule(MemberPictureFeedUploadController::TYPE, category: 'member_picture_feed')]
 class MemberPictureFeedUploadController extends AbstractFrontendModuleController
@@ -71,12 +70,11 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
 
     private Adapter $stringUtil;
 
-    private FrontendUser|null $user;
+    private FrontendUser|null $user = null;
 
     public function __construct(
         private readonly ContaoFramework $framework,
         private readonly Connection $connection,
-        private readonly EnvironmentTwig $twig,
         private readonly ImageResizer $imageResizer,
         private readonly TokenStorageInterface $tokenStorage,
         private readonly Studio $studio,
@@ -95,25 +93,20 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
         $this->stringUtil = $this->framework->getAdapter(StringUtil::class);
     }
 
-    public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
-    {
-        $user = $this->tokenStorage->getToken()?->getUser();
-
-        if ($user instanceof FrontendUser) {
-            $this->user = $user;
-        } else {
-            return new Response('', Response::HTTP_NO_CONTENT);
-        }
-
-        // Call the parent method
-        return parent::__invoke($request, $model, $section, $classes);
-    }
-
     /**
      * @throws \Exception
      */
-    public function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
+    protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
     {
+        $user = $this->tokenStorage->getToken()?->getUser();
+
+        // The module is only available to logged in members
+        if (!$user instanceof FrontendUser) {
+            return new Response('', Response::HTTP_NO_CONTENT);
+        }
+
+        $this->user = $user;
+
         if ($this->countUserImages() < $model->memberPictureFeedUploadPictureLimit || $model->memberPictureFeedUploadPictureLimit < 1) {
             $tempUploadPath = 'system/tmp/'.uniqid('mpfu_');
 
@@ -173,7 +166,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
 
             $oFile = $this->filesModel->findByUuid($rowFile['uuid']);
 
-            if (!is_file($this->projectDir.'/'.$oFile->path)) {
+            if (null === $oFile || !is_file($this->projectDir.'/'.$oFile->path)) {
                 continue;
             }
 
@@ -182,13 +175,13 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
             // Meta tags
             $meta = $this->frontend->getMetaData($oFile->meta, $page->language);
 
-            foreach ($meta as $k => $v) {
-                // Output encoding
-                $meta[$k] = StringUtil::specialcharsAttribute($v);
-            }
-
             if (empty($meta) && null !== $page->rootFallbackLanguage) {
                 $meta = $this->frontend->getMetaData($oFile->meta, $page->rootFallbackLanguage);
+            }
+
+            // Output encoding
+            foreach ($meta as $k => $v) {
+                $meta[$k] = $this->stringUtil->specialcharsAttribute($v);
             }
 
             // Create the figure
@@ -200,7 +193,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
             ;
 
             if ($figure) {
-                $picture['picture'] = $this->twig->render('@ContaoCore/Image/Studio/figure.html.twig', ['figure' => $figure]);
+                $picture['figure'] = $figure;
                 $picture['data'] = $rowFile;
                 $picture['data']['memberPictureFeedUploadTimeFormatted'] = $this->date->parse($this->config->get('dateFormat'), $rowFile['memberPictureFeedUploadTime']);
                 $picture['data']['hasCaption'] = !empty($meta['caption']);
@@ -217,7 +210,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
      */
     protected function countUserImages(): int
     {
-        return $this->connection->fetchOne(
+        return (int) $this->connection->fetchOne(
             'SELECT COUNT(id) AS numRows FROM tl_files WHERE isMemberPictureFeed = ? AND memberPictureFeedUserId = ?',
             [
                 1,
@@ -306,7 +299,7 @@ class MemberPictureFeedUploadController extends AbstractFrontendModuleController
                 $this->message->addError($GLOBALS['TL_LANG']['MPFU']['memberPictureUploadLimitReachedDuringUploadProcess']);
             } elseif (!\in_array($file->getExtension(), $extensions, true)) {
                 // Do not store files with an invalid/not allowed extension
-                $this->message->addError(\sprintf($GLOBALS['TL_LANG']['MPFU']['invalidExtensionErr'], $file->getBasename, $extensions));
+                $this->message->addError(\sprintf($GLOBALS['TL_LANG']['MPFU']['invalidExtensionErr'], $file->getBasename(), implode(', ', $extensions)));
             } else {
                 $uploadTime = time() + $index;
 

@@ -20,7 +20,7 @@ markocupic_member_picture_feed:
 ```
 
 ## Dependencies
-- Contao > 4.12
-- PHP 7.4 and higher
+- Contao ^5.3 || ^6.0
+- PHP ^8.3
 - All the JS scripts are written in pure Javasript (No jQuery dependency)
 - Bootstrap 5 with its modal component
